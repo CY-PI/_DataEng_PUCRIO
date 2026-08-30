@@ -1,5 +1,1 @@
-# Felicidade vs Preservação da Natureza vs Uso de Tecnologia
-
-Draft....
-Diz-se que o ser humano está perdendo o contato com natureza, e isso faz com que perca sua essência.
-Existe alguma relação da felicidade de uma nação com uma convivência harmoniosa com o meio ambiente, i.e. com sua preservação. Ainda, tecnologia nos faz mais felizes? Algo nestas linhas... 
+# MVP
