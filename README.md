@@ -8,12 +8,12 @@
 - [Objetivos](#-objetivos)
 - [Documentação](#-documentação)
 - [Coleta de Dados](#-coleta-de-dados)
-- [Modelagem de Dados](#-modelagem-de-dados)
+- [Modelagem de Dados](#modelagem-de-dados)
 - [Carga e Pipeline dos Dados](#-carga-e-pipeline-dos-dados)
 - [Qualidade dos Dados](#-qualidade-dos-dados)
 - [Análise dos Dados](#-análise-dos-dados)
 - [Auto-avaliação](#-auto-avaliação)
-- [Databricks Jobs & Pipeline](#-usando-databricks-jobs--pipeline)
+- [Databricks Jobs & Pipeline](#usando-databricks-jobs--pipeline)
 
 ---
 
@@ -176,6 +176,7 @@ Clique nas tabelas abaixo para visualizar detalhes.
 
 
 ---
+<a id="modelagem-de-dados"></a>
 
 ## 🏗️ Modelagem de Dados
 
@@ -369,7 +370,7 @@ O que eu mais me marcou, no entanto, foi a experiência de utilizar IA como ferr
 Em uma indústria que valoriza experiência com IA na automação de projetos e análises, visto em quase todas as vagas de emprego na área, este projeto foi extremamente importante para mim. No final, senti que eu era a pessoa pensando e salvando tempo porque tinha IA para fazer o pesado.
 
 ---
-
+<a id="databricks-jobs-pipeline"></a>
 ## ⚙️ Usando Databricks Jobs & Pipeline
 
 Por curiosidade, para automatizar a execução do pipeline de dados, foi criado um job utilizando a funcionalidade **Jobs & Pipelines** do Databricks.
