@@ -12,6 +12,7 @@
 - [Carga e Pipeline dos Dados](#-carga-e-pipeline-dos-dados)
 - [Qualidade dos Dados](#-qualidade-dos-dados)
 - [Análise dos Dados](#-análise-dos-dados)
+- [Auto-avaliação](#-auto-avaliação)
 - [Databricks Jobs & Pipeline](#-usando-databricks-jobs--pipeline)
 
 ---
@@ -44,7 +45,7 @@ O pipeline de dados foi criado seguindo a **arquitetura medalhão**, que permite
 | 🥈 **Silver** | Dados padronizados e limpos |
 | 🥇 **Gold** | Dados prontos para análise |
 
-O catálogo de dados no Databricks segue essa mesma divisão (bronze / silver / gold). Os notebooks são organizados em `bronze`, `silver`, `gold`, `analise` e `common` (funções compartilhadas entre os notebooks silver e gold).
+O catálogo de dados no Databricks segue essa mesma divisão (bronze / silver / gold). Os notebooks são organizados em `ingestion`, `bronze`, `silver`, `gold`, `analise` e `common` (funções compartilhadas entre os notebooks silver e gold).
 
 ---
 
@@ -250,9 +251,11 @@ Dimensão temporal para análises por período.
 
 ## 🔄 Carga e Pipeline dos Dados
 
-### Carga dos dados
+### 📥 Ingestão
 
-Para evitar a necessidade de configurar credenciais de API do Kaggle diretamente no ambiente Databricks, os arquivos foram baixados manualmente e salvos no GitHub; de lá, foram carregados como volume no catálogo do Databricks (`mvp_pucrio.raw_files.csv_files`).
+Para evitar a necessidade de configurar credenciais de API do Kaggle diretamente no ambiente Databricks, os arquivos foram baixados manualmente e salvos no GitHub. O notebook de ingestão copia os CSVs do Git folder para o volume do Unity Catalog (`mvp_pucrio.raw_files.csv_files`).
+
+Script com explicações: [`ingestion.ipynb`](#) _(link será adicionado após subir para o GitHub)_
 
 ### 🥉 Bronze
 
@@ -291,6 +294,7 @@ Visão final da camada gold no Databricks:
 
 <img width="468" height="323" alt="image" src="https://github.com/user-attachments/assets/671d5c1a-c6e3-424c-bc95-c2613cbf5f6c" />
 
+> 📌 As funções utilitárias compartilhadas entre silver e gold estão no notebook [`common.ipynb`](https://github.com/CY-PI/_DataEng_PUCRIO/blob/main/common.ipynb), que é executado dentro de cada notebook.
 
 ---
 
@@ -349,6 +353,15 @@ O top 5 representa ~43% do faturamento total — mix diversificado, sem dependê
 **Sim, forte relação.** Sellers ativos (81,7%) têm LTV 6x maior que churned: R$ 459 vs R$ 74. Sellers ativos fazem 34 pedidos em média vs apenas 4 dos churned. O churn está associado a baixo engajamento nas primeiras vendas.
 
 💡 **Recomendação:** Ações de suporte e onboarding focadas nas primeiras vendas para melhorar retenção de sellers novos.
+
+---
+
+## 📝 Auto-avaliação
+
+Neste projeto, aprendi a utilizar o Databricks e a aplicar a arquitetura medalhão. Percebi que a parte mais importante de um projeto de Engenharia de Dados é começar com o porquê para depois se importar com o como.
+Consegui responder a maior parte das perguntas que faziam parte do objetivo deste trabalho, com a ressalva de que o período de tempo do dataset era curto, com o primeiro ano ainda mostrando um estágio de crescimento da plataforma.
+O que eu mais me marcou, no entanto, foi a experiência de utilizar IA como ferramenta de trabalho. Comecei pedindo à "Genie" que validasse como eu estava pensando em começar o projeto, mas recebi boa parte do código pronta. Minha primeira reação foi negativa, fiquei irritada porque o ponto do MVP era eu fazer o projeto. A Genie deletou tudo e passou a me acompanhar na construção. Com o tempo, percebi que tarefas repetitivas, particularmente a documentação de tabelas, podiam ser delegadas, sem que eu perdesse o controle. Me sentindo mais confortável com o Databricks e percebendo como o uso da IA economizava tempo, passei a usá-la com mais confiança, inclusive quando decidi reestruturar drasticamente os notebooks (de um único para múltiplos).
+Em uma indústria que valoriza experiência com IA na automação de projetos e análises, visto em quase todas as vagas de emprego na área, este projeto foi extremamente importante para mim. No final, senti que eu era a pessoa pensando e salvando tempo porque tinha IA para fazer o pesado.
 
 ---
 
