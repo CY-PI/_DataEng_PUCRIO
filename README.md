@@ -58,7 +58,7 @@ Os arquivos utilizados neste projeto vêm do **Kaggle**, repositório que garant
 
 **📄 Licença:** ambos os datasets são disponibilizados sob **CC BY-NC-SA 4.0** (Atribuição, Uso Não-Comercial, Compartilhamento pela mesma licença), compatível com o uso acadêmico deste MVP.
 
-Os arquivos foram salvos em `mvp_pucrio.raw_files.csv_files` (e também na pasta [`files`](./files) deste repositório). Nem todas as colunas são utilizadas no modelo final — as descartadas na camada Silver estão marcadas em *itálico* nas tabelas abaixo.
+Os arquivos foram salvos em `mvp_pucrio.raw_files.csv_files` (e também na pasta [[`files`](./files)](https://github.com/CY-PI/_DataEng_PUCRIO/edit/main/README.md#-carga-e-pipeline-dos-dados) deste repositório). Nem todas as colunas são utilizadas no modelo final — as descartadas na camada Silver estão marcadas em *itálico* nas tabelas abaixo.
 
 <br>
 
@@ -276,7 +276,7 @@ Antes de qualquer transformação, é feito um diagnóstico dos dados (nulos, du
 3. Substituição de valores ausentes por `"unknown"`
 4. Nova verificação de qualidade após a limpeza
 
-Scripts: [`silver.ipynb`](https://github.com/CY-PI/_DataEng_PUCRIO/blob/main/silver.ipynb)
+Script com explicações: [`silver.ipynb`](https://github.com/CY-PI/_DataEng_PUCRIO/blob/main/silver.ipynb)
 
 Visão final da camada silver no Databricks:
 
@@ -289,7 +289,7 @@ Na camada gold, as tabelas são criadas e documentadas conforme o modelo estrela
 
 Também é implementado um **checksum de validação**, comparando a soma de `sales_value` em `fato_vendas` com a soma original em `order_items`, garantindo que os `JOIN`s não duplicaram registros na tabela fato.
 
-Scripts: [`gold.ipynb`](https://github.com/CY-PI/_DataEng_PUCRIO/blob/main/gold.ipynb) (inclui também a verificação de qualidade dos dados)
+Script com explicações: [`gold.ipynb`](https://github.com/CY-PI/_DataEng_PUCRIO/blob/main/gold.ipynb) (inclui também a verificação de qualidade dos dados)
 
 Visão final da camada gold no Databricks:
 
@@ -306,7 +306,7 @@ Foram verificadas completude, consistência, unicidade e acurácia dos dados, al
 
 ## 📈 Análise dos Dados
 
-Scripts: [`analise.ipynb`](https://github.com/CY-PI/_DataEng_PUCRIO/blob/main/analise.ipynb)
+Script com explicações: [`analise.ipynb`](https://github.com/CY-PI/_DataEng_PUCRIO/blob/main/analise.ipynb)
 
 Abaixo estão as respostas às perguntas iniciais do projeto.
 
