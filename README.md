@@ -191,9 +191,21 @@ Como a intenção é criar um ambiente OLAP, foi utilizada a modelagem estrela:
 
 #### `fato_vendas`
 
-Tabela de transações de vendas com todas as métricas agregáveis.
+Tabela fato de vendas com as métricas e dimensões necessárias para as análises comerciais.
 
-![fato_vendas](./media/image2.png)
+| Coluna | Tipo | Descrição | Origem | Domínio |
+|---|---|---|---|---|
+| `order_id` | `STRING` | PK — ID único da ordem | `bronze.orders` | Identificador único alfanumérico |
+| `mql_id` | `STRING` | FK do lead de marketing que originou essa venda, quando aplicável | `silver.closed_deals` via `LEFT JOIN` | Nullable; nem toda venda tem lead associado |
+| `seller_id` | `STRING` | Vendedor na plataforma. Representa o real cliente da plataforma | `bronze.sellers` | Valor alfanumérico |
+| `customer_state` | `STRING` | Estado onde o pedido foi realizado | `bronze.customers` | Sigla de estado brasileiro com 2 letras |
+| `product_id` | `STRING` | FK do produto vendido | `bronze.order_items` | Valor alfanumérico |
+| `order_date` | `DATE` | FK da data da compra | `bronze.orders` — `order_purchase_timestamp` | Formato `YYYY-MM-DD`; intervalo de `2016-09-04` a `2018-10-17` |
+| `time_category` | `STRING` | Faixa horária em que a compra foi feita, utilizada para análises de padrões de consumo ao longo do dia | Derivada de `order_purchase_timestamp` | `00:00-02:00`, `02:00-04:00`, ..., `22:00-24:00`; 12 faixas de 2 horas |
+| `order_status` | `STRING` | Status atual da ordem no ciclo de vida do pedido | `bronze.orders` | `approved`, `canceled`, `created`, `delivered`, `invoiced`, `processing`, `shipped`, `unavailable` |
+| `quantity` | `INT` | Quantidade de itens vendidos na ordem | `bronze.order_items` — `COUNT` agregado | Maior que `0`; número inteiro |
+| `sales_value` | `DECIMAL` | Valor total vendido na ordem | `bronze.order_items` | Maior que `0`; intervalo de `0.85` a `6735.00` |
+| `commission` | `DECIMAL` | Comissão da plataforma sobre a venda | Calculada como `sales_value * 0.1` | 10% de `sales_value` |
 
 #### `dim_leads`
 
@@ -203,7 +215,15 @@ Todos os leads qualificados de marketing (MQLs), incluindo tanto os que converte
 
 *Origem:* `bronze.marketing_qualified_leads` + `bronze.closed_deals` (para os convertidos).
 
-![dim_leads](./media/image3.png)
+| Coluna | Tipo | Descrição | Domínio |
+|---|---|---|---|
+| `mql_id` | `STRING` | PK — ID único do lead | Identificador único alfanumérico |
+| `seller_id` | `STRING` | Vendedor para o qual o lead converteu, quando aplicável | Alfanumérico; `NULL` para leads não convertidos |
+| `origin` | `STRING` | Canal pelo qual o lead chegou | `direct_traffic`, `display`, `email`, `organic_search`, `other`, `other_publicities`, `paid_search`, `referral`, `social`, `unknown` |
+| `first_contact_date` | `DATE` | Data do primeiro contato | Formato `YYYY-MM-DD` |
+| `won_date` | `DATE` | Data em que o lead se converteu em venda | Formato `YYYY-MM-DD`; `NULL` para leads não convertidos |
+| `sales_cycle` | `INT` | Tempo, em dias, entre o primeiro contato e a conversão | Calculado como `DATEDIFF(won_date, first_contact_date)`; inteiro positivo; `NULL` para leads não convertidos |
+
 
 #### `dim_products`
 
@@ -211,13 +231,23 @@ Produtos disponíveis na plataforma.
 
 *Origem:* `silver.products`
 
-![dim_products](./media/image4.png)
+| Coluna | Tipo | Descrição | Domínio |
+|---|---|---|---|
+| `product_id` | `STRING` | PK — ID único do produto | Identificador único alfanumérico |
+| `category` | `STRING` | Categoria do produto | 74 categorias em português (ex.: `agro_industria_e_comercio`, `alimentos`, …); `"unknown"` para valores nulos |
+
 
 #### `dim_dates`
 
 Dimensão temporal para análises por período.
 
-![dim_dates](./media/image5.png)
+| Coluna | Tipo | Descrição | Origem | Domínio |
+|---|---|---|---|---|
+| `order_date` | `DATE` | PK — Data (YYYY-MM-DD) | Derivada de `order_purchase_timestamp` | Formato `YYYY-MM-DD`; intervalo de `2016-09-04` a `2018-10-17` |
+| `year` | `INT` | Ano (YYYY) | Extraído de `order_date` | Intervalo: `2016–2018` |
+| `month` | `INT` | Mês (1–12) | Extraído de `order_date` | `1–12` |
+| `quarter` | `INT` | Trimestre (Q1–Q4) | Calculado a partir de `month` | `1–4` |
+| `day_of_week` | `STRING` | Dia da semana | Extraído de `order_date` | `1–7` (`1 = Domingo`, `7 = Sábado`) |
 
 ---
 
