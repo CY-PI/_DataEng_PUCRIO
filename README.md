@@ -258,6 +258,7 @@ Para evitar a necessidade de configurar credenciais de API do Kaggle diretamente
 Script com explicações: [ingestion.ipynb](https://github.com/CY-PI/_DataEng_PUCRIO/edit/main/ingestion.ipynb)
 
 Visão final do volume raw_files.csv_files no Databricks:
+
 <img width="530" height="513" alt="image" src="https://github.com/user-attachments/assets/185038e6-4f3b-43ce-bf29-39440443a462" />
 
 
