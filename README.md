@@ -255,7 +255,7 @@ Dimensão temporal para análises por período.
 
 Para evitar a necessidade de configurar credenciais de API do Kaggle diretamente no ambiente Databricks, os arquivos foram baixados manualmente e salvos no GitHub. O notebook de ingestão copia os CSVs do Git folder para o volume do Unity Catalog (`mvp_pucrio.raw_files.csv_files`).
 
-Script com explicações: [[ingestion.ipynb](https://github.com/CY-PI/_DataEng_PUCRIO/edit/main/ingestion.ipynb)](https://github.com/CY-PI/_DataEng_PUCRIO/blob/main/ingestion.ipynb)
+Script com explicações: [`ingestion.ipynb`](https://github.com/CY-PI/_DataEng_PUCRIO/blob/main/ingestion.ipynb)
 
 Visão final do volume raw_files.csv_files no Databricks:
 
