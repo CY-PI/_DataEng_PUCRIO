@@ -59,9 +59,11 @@ Os arquivos utilizados neste projeto vêm do **Kaggle**, repositório que garant
 
 **📄 Licença:** ambos os datasets são disponibilizados sob **CC BY-NC-SA 4.0** (Atribuição, Uso Não-Comercial, Compartilhamento pela mesma licença), compatível com o uso acadêmico deste MVP.
 
-Os arquivos foram salvos em `mvp_pucrio.raw_files.csv_files` (e também na pasta [[`files`](./files)](https://github.com/CY-PI/_DataEng_PUCRIO/edit/main/README.md#-carga-e-pipeline-dos-dados) deste repositório). Nem todas as colunas são utilizadas no modelo final — as descartadas na camada Silver estão marcadas em *itálico* nas tabelas abaixo.
+**⚠️ Considerações:** Originalmente há mais planilhas disponíveis no Kaggle; para simplificação, foram incluídas apenas as que atendem aos objetivos deste trabalho.
 
-Clique nas planilhas abaixo para visualizar detalhes.
+Nem todas as colunas das tabelas abaixo são utilizadas no modelo final — as descartadas na camada Silver estão marcadas em *itálico* nas tabelas abaixo.
+
+Clique nas tabelas abaixo para visualizar detalhes.
 
 <br>
 
@@ -172,7 +174,6 @@ Clique nas planilhas abaixo para visualizar detalhes.
 
 </details>
 
-**⚠️ Considerações:** Originalmente há mais planilhas disponíveis no Kaggle; para simplificação, foram incluídas apenas as que atendem aos objetivos deste trabalho.
 
 ---
 
@@ -196,7 +197,6 @@ Tabela fato de vendas com as métricas e dimensões necessárias para as anális
 | `customer_state` | `STRING` | Estado onde o pedido foi realizado | `bronze.customers` | Sigla de estado brasileiro com 2 letras |
 | `product_id` | `STRING` | FK do produto vendido | `bronze.order_items` | Valor alfanumérico |
 | `order_date` | `DATE` | FK da data da compra | `bronze.orders` — `order_purchase_timestamp` | Formato `YYYY-MM-DD`; intervalo de `2016-09-04` a `2018-10-17` |
-| `time_category` | `STRING` | Faixa horária em que a compra foi feita, utilizada para análises de padrões de consumo ao longo do dia | Derivada de `order_purchase_timestamp` | `00:00-02:00`, `02:00-04:00`, ..., `22:00-24:00`; 12 faixas de 2 horas |
 | `order_status` | `STRING` | Status atual da ordem no ciclo de vida do pedido | `bronze.orders` | `approved`, `canceled`, `created`, `delivered`, `invoiced`, `processing`, `shipped`, `unavailable` |
 | `quantity` | `INT` | Quantidade de itens vendidos na ordem | `bronze.order_items` — `COUNT` agregado | Maior que `0`; número inteiro |
 | `sales_value` | `DECIMAL` | Valor total vendido na ordem | `bronze.order_items` | Maior que `0`; intervalo de `0.85` a `6735.00` |
@@ -255,7 +255,7 @@ Dimensão temporal para análises por período.
 
 Para evitar a necessidade de configurar credenciais de API do Kaggle diretamente no ambiente Databricks, os arquivos foram baixados manualmente e salvos no GitHub. O notebook de ingestão copia os CSVs do Git folder para o volume do Unity Catalog (`mvp_pucrio.raw_files.csv_files`).
 
-Script com explicações: [`ingestion.ipynb`](#) _(link será adicionado)_
+Script com explicações: [ingestion.ipynb](https://github.com/CY-PI/_DataEng_PUCRIO/edit/main/README.md#:~:text=ingestion.ipynb)
 
 ### 🥉 Bronze
 
