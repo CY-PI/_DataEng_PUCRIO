@@ -60,6 +60,8 @@ Os arquivos utilizados neste projeto vêm do **Kaggle**, repositório que garant
 
 Os arquivos foram salvos em `mvp_pucrio.raw_files.csv_files` (e também na pasta [[`files`](./files)](https://github.com/CY-PI/_DataEng_PUCRIO/edit/main/README.md#-carga-e-pipeline-dos-dados) deste repositório). Nem todas as colunas são utilizadas no modelo final — as descartadas na camada Silver estão marcadas em *itálico* nas tabelas abaixo.
 
+Clique nas planilhas abaixo para visualizar detalhes.
+
 <br>
 
 <details>
