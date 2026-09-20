@@ -265,7 +265,134 @@ Visão final do volume raw_files.csv_files no Databricks:
 
 ### 🥉 Bronze
 
-Nesta camada, as tabelas são criadas na camada bronze, em seu formato raw, mas com tipos definidos.
+Nesta camada, as tabelas são criadas na camada bronze, em seu formato raw, mas com **tipos definidos** (schemas explícitos em PySpark para cada tabela). Cada tabela recebe duas colunas de controle: `_source_file` (nome do arquivo CSV de origem) e `_ingested_at` (timestamp da carga). As tabelas são nomeadas removendo prefixos (`olist_`) e sufixos (`_dataset`) dos arquivos originais.
+
+**Catálogo de Dados — Camada Bronze:**
+
+Todas as tabelas e colunas foram documentadas no Unity Catalog via `COMMENT ON TABLE` e `COMMENT ON COLUMN`. Abaixo estão as descrições:
+
+<br>
+<details>
+<summary><strong>📋 customers</strong> — Dados de clientes que realizaram compras na plataforma. Cada registro representa um cliente único identificado por customer_id.</summary>
+
+| Coluna | Tipo | Descrição |
+|---|---|---|
+| `customer_id` | `STRING` | ID único do cliente (PK) |
+| `customer_unique_id` | `STRING` | ID único universal do cliente — usado para identificar o mesmo cliente em múltiplos pedidos |
+| `customer_zip_code_prefix` | `INT` | Prefixo do CEP do cliente (primeiros 5 dígitos) |
+| `customer_city` | `STRING` | Cidade de residência do cliente |
+| `customer_state` | `STRING` | Estado (UF) de residência do cliente |
+| `_source_file` | `STRING` | Nome do arquivo CSV de origem |
+| `_ingested_at` | `TIMESTAMP` | Timestamp da carga |
+
+</details>
+<br>
+<details>
+<summary><strong>📋 orders</strong> — Pedidos realizados pelos clientes. Contém informações de status e timestamps do ciclo de vida do pedido (compra, aprovação, envio, entrega).</summary>
+
+| Coluna | Tipo | Descrição |
+|---|---|---|
+| `order_id` | `STRING` | ID único do pedido (PK) |
+| `customer_id` | `STRING` | ID do cliente que realizou o pedido (FK para customers) |
+| `order_status` | `STRING` | Status atual do pedido (delivered, shipped, canceled, etc) |
+| `order_purchase_timestamp` | `TIMESTAMP` | Data e hora da compra |
+| `order_approved_at` | `TIMESTAMP` | Data e hora da aprovação do pagamento |
+| `order_delivered_carrier_date` | `TIMESTAMP` | Data e hora da entrega ao transportador |
+| `order_delivered_customer_date` | `TIMESTAMP` | Data e hora da entrega ao cliente |
+| `order_estimated_delivery_date` | `TIMESTAMP` | Data estimada de entrega informada ao cliente |
+| `_source_file` | `STRING` | Nome do arquivo CSV de origem |
+| `_ingested_at` | `TIMESTAMP` | Timestamp da carga |
+
+</details>
+<br>
+<details>
+<summary><strong>📋 order_items</strong> — Itens individuais de cada pedido. Um pedido pode conter múltiplos itens. Relaciona pedidos com produtos e sellers.</summary>
+
+| Coluna | Tipo | Descrição |
+|---|---|---|
+| `order_id` | `STRING` | ID do pedido (PK composta, FK para orders) |
+| `order_item_id` | `INT` | Número sequencial do item dentro do pedido |
+| `product_id` | `STRING` | ID do produto (PK composta, FK para products) |
+| `seller_id` | `STRING` | ID do vendedor (PK composta, FK para sellers) |
+| `shipping_limit_date` | `TIMESTAMP` | Data limite para o seller enviar o produto ao transportador |
+| `price` | `DOUBLE` | Preço unitário do item (R$) |
+| `freight_value` | `DOUBLE` | Valor do frete deste item (R$) |
+| `_source_file` | `STRING` | Nome do arquivo CSV de origem |
+| `_ingested_at` | `TIMESTAMP` | Timestamp da carga |
+
+</details>
+<br>
+<details>
+<summary><strong>📋 products</strong> — Catálogo de produtos disponíveis na plataforma. Inclui características físicas e descritivas dos produtos.</summary>
+
+| Coluna | Tipo | Descrição |
+|---|---|---|
+| `product_id` | `STRING` | ID único do produto (PK) |
+| `product_category_name` | `STRING` | Categoria do produto (em português) |
+| `product_name_lenght` | `INT` | Comprimento do nome do produto (número de caracteres) |
+| `product_description_lenght` | `INT` | Comprimento da descrição do produto (número de caracteres) |
+| `product_photos_qty` | `INT` | Quantidade de fotos do produto |
+| `product_weight_g` | `INT` | Peso do produto (gramas) |
+| `product_length_cm` | `INT` | Comprimento do produto (cm) |
+| `product_height_cm` | `INT` | Altura do produto (cm) |
+| `product_width_cm` | `INT` | Largura do produto (cm) |
+| `_source_file` | `STRING` | Nome do arquivo CSV de origem |
+| `_ingested_at` | `TIMESTAMP` | Timestamp da carga |
+
+</details>
+<br>
+<details>
+<summary><strong>📋 sellers</strong> — Vendedores/fornecedores cadastrados na plataforma. Cada seller pode vender múltiplos produtos.</summary>
+
+| Coluna | Tipo | Descrição |
+|---|---|---|
+| `seller_id` | `STRING` | ID único do seller/vendedor (PK) |
+| `seller_zip_code_prefix` | `INT` | Prefixo do CEP do seller (primeiros 5 dígitos) |
+| `seller_city` | `STRING` | Cidade onde o seller está localizado |
+| `seller_state` | `STRING` | Estado (UF) onde o seller está localizado |
+| `_source_file` | `STRING` | Nome do arquivo CSV de origem |
+| `_ingested_at` | `TIMESTAMP` | Timestamp da carga |
+
+</details>
+<br>
+<details>
+<summary><strong>📋 marketing_qualified_leads</strong> — Leads qualificados de marketing (MQLs). Prospects que demonstraram interesse e foram qualificados pelo time de marketing.</summary>
+
+| Coluna | Tipo | Descrição |
+|---|---|---|
+| `mql_id` | `STRING` | ID único do lead qualificado de marketing (PK) |
+| `first_contact_date` | `DATE` | Data do primeiro contato com o lead |
+| `landing_page_id` | `STRING` | ID da landing page de origem do lead |
+| `origin` | `STRING` | Canal de origem do lead (organic_search, paid_search, social, etc) |
+| `_source_file` | `STRING` | Nome do arquivo CSV de origem |
+| `_ingested_at` | `TIMESTAMP` | Timestamp da carga |
+
+</details>
+<br>
+<details>
+<summary><strong>📋 closed_deals</strong> — Negócios fechados. Contém informações sobre leads que se converteram em sellers ativos na plataforma.</summary>
+
+| Coluna | Tipo | Descrição |
+|---|---|---|
+| `mql_id` | `STRING` | ID do lead (PK, FK para marketing_qualified_leads) |
+| `seller_id` | `STRING` | ID do seller resultante da conversão (FK para sellers) |
+| `sdr_id` | `STRING` | ID do SDR (Sales Development Representative) responsável |
+| `sr_id` | `STRING` | ID do SR (Sales Representative) responsável |
+| `won_date` | `TIMESTAMP` | Data e hora do fechamento do negócio |
+| `business_segment` | `STRING` | Segmento de negócio do seller (pet, health_beauty, electronics, etc) |
+| `lead_type` | `STRING` | Tipo/tamanho do lead (online_small, online_medium, online_big, etc) |
+| `lead_behaviour_profile` | `STRING` | Perfil comportamental do lead durante o processo de vendas |
+| `has_company` | `BOOLEAN` | Indica se o seller possui CNPJ |
+| `has_gtin` | `BOOLEAN` | Indica se o seller possui código GTIN nos produtos |
+| `average_stock` | `STRING` | Estoque médio declarado pelo seller |
+| `business_type` | `STRING` | Tipo de negócio (reseller, manufacturer, etc) |
+| `declared_product_catalog_size` | `DOUBLE` | Tamanho do catálogo de produtos declarado |
+| `declared_monthly_revenue` | `DOUBLE` | Receita mensal declarada (R$) |
+| `_source_file` | `STRING` | Nome do arquivo CSV de origem |
+| `_ingested_at` | `TIMESTAMP` | Timestamp da carga |
+
+</details>
+
 O script para esta camada está em: [`bronze.ipynb`](https://github.com/CY-PI/_DataEng_PUCRIO/blob/main/bronze.ipynb)
 
 Visão final da camada bronze no Databricks:
@@ -274,14 +401,45 @@ Visão final da camada bronze no Databricks:
 
 ### 🥈 Silver
 
-Antes de qualquer transformação, é feito um diagnóstico dos dados (nulos, duplicados, inconsistências) para saber o que precisa ser limpo. Em seguida:
+Antes de qualquer transformação, é feito um diagnóstico dos dados (nulos, duplicados, inconsistências) para saber o que precisa ser limpo.
 
-1. Remoção de colunas fora do escopo do modelo final
-2. Remoção de duplicados
-3. Substituição de valores ausentes por `"unknown"`
-4. Nova verificação de qualidade após a limpeza
+**Diagnóstico (dados brutos na camada Bronze):**
 
-Script com explicações: [`silver.ipynb`](https://github.com/CY-PI/_DataEng_PUCRIO/blob/main/silver.ipynb)
+| Tabela | Coluna | Nulos encontrados |
+|---|---|---|
+| `products` | `product_category_name` | 610 |
+| `marketing_qualified_leads` | `origin` | 60 |
+| Demais tabelas e colunas | — | 0 |
+
+- **Duplicados:** nenhuma tabela apresentou duplicidade nas chaves primárias.
+- **Consistência de valores categóricos:** também foram validados os estados (UFs brasileiras) em `customers` e `sellers`, e os status de pedido em `orders` (`delivered`, `shipped`, `canceled`, `processing`, `unavailable`, `invoiced`, `created`, `approved`). Nenhum valor inválido foi encontrado.
+- **Agregação necessária em `order_items`:** 112.650 linhas na origem, mas apenas 102.425 combinações únicas de `order_id + product_id + seller_id`. As 10.225 linhas restantes representam múltiplos itens do mesmo produto/seller dentro do mesmo pedido, que foram agregados (somando `price` em `sales_value` e contando em `quantity`).
+
+**Transformações aplicadas:**
+
+1. Remoção de colunas fora do escopo do modelo final (ex.: `freight_value`, `shipping_limit_date`, `customer_unique_id`, etc.)
+2. Agrupamento de `order_items` por `order_id + product_id + seller_id`, somando `price` em `sales_value` e contando linhas em `quantity` (112.650 → 102.425 linhas)
+3. Substituição de valores ausentes por `"unknown"` (610 em `product_category_name`, 60 em `origin`)
+4. Definição de tipos explícitos (ex.: `order_purchase_timestamp` → `DATE` como `order_date`)
+
+**Verificação pós-limpeza:**
+
+| Verificação | Resultado |
+|---|---|
+| Nulos em todas as tabelas silver | ✅ 0 |
+| Duplicados em todas as tabelas silver | ✅ 0 |
+
+**Checksum (validação do agrupamento):**
+
+| Origem | Soma de `sales_value` |
+|---|---|
+| `bronze.order_items` (antes) | R$ 13.591.643,70 |
+| `silver.order_items` (depois) | R$ 13.591.643,70 |
+| **Diferença (checksum)** | **0** ✅ |
+
+O agrupamento não alterou o valor total de vendas — nenhuma venda foi perdida ou duplicada.
+
+Script: [`silver.ipynb`](https://github.com/CY-PI/_DataEng_PUCRIO/blob/main/silver.ipynb)
 
 Visão final da camada silver no Databricks:
 
@@ -292,7 +450,61 @@ Visão final da camada silver no Databricks:
 
 Na camada gold, as tabelas são criadas e documentadas conforme o modelo estrela definido acima, com constraints de Primary Key/Foreign Key (apenas informativos — não verificados pelo Databricks).
 
-Também é implementado um **checksum de validação**, comparando a soma de `sales_value` em `fato_vendas` com a soma original em `order_items`, garantindo que os `JOIN`s não duplicaram registros na tabela fato.
+**Criação de `dim_leads`** — o `LEFT JOIN` com `closed_deals` preserva os leads que não foram convertidos, preenchendo `seller_id` com `"unknown"` via `COALESCE`. Isso permite análises de funil completo — desde o primeiro contato até a conversão — sem perder leads que não avançaram no funil:
+
+```sql
+CREATE OR REPLACE TABLE dim_leads AS
+SELECT 
+    mql.mql_id,
+    COALESCE(cd.seller_id, 'unknown') AS seller_id,
+    mql.origin,
+    mql.first_contact_date,
+    CAST(cd.won_date AS DATE) AS won_date,
+    DATEDIFF(CAST(cd.won_date AS DATE), mql.first_contact_date) AS sales_cycle
+FROM silver.marketing_qualified_leads mql
+LEFT JOIN silver.closed_deals cd
+    ON mql.mql_id = cd.mql_id;
+```
+
+**Criação de `fato_vendas`** — a tabela fato envolve três joins:
+
+1. `INNER JOIN` entre `orders` e `order_items` — cada linha da fato representa um item vendido dentro de uma ordem.
+2. `LEFT JOIN` com `closed_deals` **no nível do seller** (por `seller_id`, não por `order_id`) — toda venda de um seller herda o mesmo `mql_id`, ou seja, o canal de aquisição é atribuído ao seller, não à venda individual. Sellers sem lead rastreado recebem `"unknown"`.
+3. `LEFT JOIN` com `customers` (por `customer_id`) — traz `customer_state`, representando o local onde o produto foi vendido.
+
+A comissão da plataforma é fixa em 10% sobre o valor da venda: `ROUND(sales_value * 0.10, 2)`.
+
+```sql
+CREATE OR REPLACE TABLE fato_vendas AS
+SELECT 
+    o.order_id,
+    COALESCE(c.mql_id, "unknown") AS mql_id,
+    oi.seller_id,
+    cust.customer_state,
+    oi.product_id,
+    CAST(o.order_purchase_timestamp AS DATE) AS order_date,
+    COALESCE(o.order_status, 'unknown') AS order_status,
+    oi.quantity,
+    oi.sales_value,
+    ROUND(oi.sales_value * 0.10, 2) AS commission
+FROM silver.orders o
+INNER JOIN silver.order_items oi 
+    ON o.order_id = oi.order_id
+LEFT JOIN silver.closed_deals c 
+    ON oi.seller_id = c.seller_id
+LEFT JOIN silver.customers cust
+    ON o.customer_id = cust.customer_id;
+```
+
+**Checksum (validação dos JOINs):**
+
+Comparando a soma de `sales_value` entre `silver.order_items` e `gold.fato_vendas`:
+
+| Comparação | Resultado |
+|---|---|
+| `SUM(silver.order_items.sales_value) − SUM(fato_vendas.sales_value)` | **0** ✅ |
+
+Os `JOIN`s não duplicaram nem perderam registros na tabela fato.
 
 Script com explicações: [`gold.ipynb`](https://github.com/CY-PI/_DataEng_PUCRIO/blob/main/gold.ipynb) (inclui também a verificação de qualidade dos dados)
 
@@ -308,15 +520,47 @@ Visão final da camada gold no Databricks:
 
 Foram verificadas completude, consistência, unicidade e acurácia dos dados, além da identificação de outliers que pudessem distorcer análises estatísticas. Nenhum ajuste foi realizado — tudo documentado no notebook `gold` (link acima).
 
+<details>
+<summary><strong>📋 Detalhes da verificação de qualidade</strong></summary>
+
+| Dimensão | Resultado |
+|---|---|
+| **Completude** | ✅ Nenhuma tabela apresentou valores nulos nas colunas do modelo. A limpeza feita na camada Silver (valores ausentes preenchidos com `"unknown"`) garantiu completude até a camada final. |
+| **Consistência** | ✅ Validada em dois níveis: (1) integridade referencial garantida pelas constraints de FK (`fk_fato_leads`, `fk_fato_produtos`, `fk_fato_dates`) e PK composta em `fato_vendas`; (2) checksum entre `silver.order_items` e `fato_vendas` confirmou que os joins não alteraram o valor total de vendas. A consistência de valores categóricos (estados, status de pedido) já foi verificada na camada Silver e chega à Gold por herança. |
+| **Unicidade** | ✅ Não há linhas duplicadas nem violação da chave composta primária (`order_id + product_id + seller_id`) na tabela `fato_vendas`. |
+| **Acurácia temporal** | ⚠️ `dim_leads` apresentou 17 registros de leads convertidos com `won_date` posterior à última data de venda registrada no dataset, e 1 registro com `won_date` anterior ao `first_contact_date` (inconsistência lógica — um negócio não pode ser fechado antes do primeiro contato). Optou-se por manter esses registros e documentar a limitação, já que representam menos de 0,1% da base de leads e não afetam as métricas de vendas (`fato_vendas`) — apenas análises específicas de ciclo de vendas que usem esses casos pontuais. |
+| **Outliers** | ⚠️ 4.195 linhas (~4% de `fato_vendas`) têm preço unitário fora do intervalo IQR esperado para o respectivo produto. Ao inspecionar os casos de maior valor, eles correspondem a categorias coerentes com preços altos (eletrônicos, relógios, informática, ferramentas de construção), com `quantity=1` — sugerindo variação legítima de preço (versões/modelos diferentes do mesmo `product_id`, ou mudança de preço ao longo do tempo) e não erro de digitação. Optou-se por não remover essas linhas, mas registrar a decisão. |
+
+**Código das verificações de acurácia temporal e outliers:**
+
+```python
+def check_temporal_accuracy(df, table_name, last_date):
+    """Verifica se datas fazem sentido no contexto do negócio."""
+    # 1. Datas no futuro (impossível)
+    # 2. Won_date deve ser >= first_contact_date (para leads convertidos)
+    ...
+
+def detect_outliers(df, table_name):
+    """Detecta outliers em preços unitários usando método IQR (Interquartile Range)."""
+    # Calcula Q1, Q3 por produto e filtra linhas fora de [Q1 - 1.5*IQR, Q3 + 1.5*IQR]
+    ...
+```
+
+**Output da verificação:**
+
+- Acurácia temporal: 17 linhas com `won_date` no futuro + 1 com `won_date < first_contact_date`
+- Outliers: 4.195 linhas detectadas (categorias de alto preço: eletrônicos, relógios, informática)
+- Resultado final: 🎉 Nenhuma tabela com problemas críticos — os encontrados foram documentados e mantidos
+
+</details>
+
 ---
 
 ## 📈 Análise dos Dados
 
-Script com explicações: [`analise.ipynb`](https://github.com/CY-PI/_DataEng_PUCRIO/blob/main/analise.ipynb)
+Script: [`analise.ipynb`](https://github.com/CY-PI/_DataEng_PUCRIO/blob/main/analise.ipynb)
 
-> 💡 **Nota:** Abaixo está um resumo das respostas. A análise completa com insights detalhados e recomendações de ação está disponível no notebook [`analise.ipynb`](https://github.com/CY-PI/_DataEng_PUCRIO/blob/main/analise.ipynb).
-
-Abaixo estão as respostas às perguntas iniciais do projeto.
+Abaixo estão as respostas às perguntas iniciais do projeto, com insights e recomendações de ação.
 
 ### 1️⃣ Quais são os meses de maior pico?
 
@@ -326,9 +570,41 @@ Abaixo estão as respostas às perguntas iniciais do projeto.
 
 💡 **Recomendação:** Investigar se a queda em 2018 persiste nos meses seguintes para distinguir sazonalidade de perda de tração.
 
+> ⚠️ Precisaríamos de um período maior (3 a 5 anos de 2018 em diante) para entender efetivamente se há picos de venda recorrentes. As **próximas análises** focam no período de setembro/2017 a agosto/2018, para ter um ano completo.
+
 ### 2️⃣ De onde vem a receita? A regra de Pareto se aplica aos vendedores?
 
-**Sim.** 19% dos sellers (516 de 2.682) detêm 80% das vendas, confirmando Pareto. O seller #1 sozinho responde por R$ 203K (2% do total). Os 81% restantes dividem apenas 20% das vendas — longa cauda típica de marketplaces.
+**Sim.** 19% dos sellers (515 de 2.682) detêm 80% das vendas, confirmando Pareto. O seller #1 sozinho responde por R$ 203K (2% do total). Entre os top 10, o ticket médio varia de R$ 67 a R$ 581, revelando dois modelos de negócio distintos entre os maiores sellers. Como a comissão é fixa em 10%, os top sellers também são os que mais geram receita para a plataforma (top seller: R$ 20,4K de comissão no período). Os 81% restantes (2.167 sellers) dividem apenas 20% das vendas — longa cauda típica de marketplaces.
+
+
+<br>
+<details>
+<summary><strong>📊 Sumário: Top 19% vs Restante 81%</strong></summary>
+
+| Grupo | # Sellers | % Sellers | Pedidos | Vendas | % Vendas | Comissão | Ticket médio |
+|---|---|---|---|---|---|---|---|
+| Top 19% | 515 | 19,2% | 56.875 | R$ 8.341.945,67 | 80% | R$ 834.214,93 | R$ 330,01 |
+| Restante 81% | 2.167 | 80,8% | 19.901 | R$ 2.086.911,79 | 20% | R$ 208.697,65 | R$ 158,90 |
+
+</details>
+<br>
+<details>
+<summary><strong>📊 Top 10 sellers</strong></summary>
+
+| # | Seller | Pedidos | Vendas | Comissão | Ticket médio |
+|---|---|---|---|---|---|
+| 1 | `4869f7a5...` | 1.020 | R$ 203.825,70 | R$ 20.382,57 | R$ 199,83 |
+| 2 | `53243585...` | 324 | R$ 188.200,05 | R$ 18.819,98 | R$ 580,86 |
+| 3 | `fa1c13f2...` | 470 | R$ 151.480,64 | R$ 15.148,10 | R$ 322,30 |
+| 4 | `1025f0e2...` | 883 | R$ 133.528,15 | R$ 13.352,90 | R$ 151,22 |
+| 5 | `7c67e144...` | 667 | R$ 132.670,89 | R$ 13.267,38 | R$ 198,91 |
+| 6 | `955fee92...` | 1.259 | R$ 132.455,93 | R$ 13.245,66 | R$ 105,21 |
+| 7 | `da8622b1...` | 1.113 | R$ 132.255,37 | R$ 13.225,55 | R$ 118,83 |
+| 8 | `4a3ca931...` | 1.166 | R$ 128.034,73 | R$ 12.803,56 | R$ 109,81 |
+| 9 | `7d13fca1...` | 565 | R$ 113.628,97 | R$ 11.363,01 | R$ 201,11 |
+| 10 | `6560211a...` | 1.487 | R$ 100.024,88 | R$ 10.002,50 | R$ 67,27 |
+
+</details>
 
 💡 **Recomendação:** Foco em retenção e crescimento dos top sellers; estratégias para ativar a cauda longa de baixo volume.
 
@@ -336,15 +612,15 @@ Abaixo estão as respostas às perguntas iniciais do projeto.
 
 **beleza_saude lidera com R$ 1,01M** (7.056 pedidos). Top 5:
 
-| Categoria | Receita | Ticket médio |
-|---|---|---|
-| 🥇 beleza_saude | R$ 1,01M | R$ 139,50 |
-| 🥈 relogios_presentes | R$ 991K | R$ 199,88 |
-| 🥉 cama_mesa_banho | R$ 777K | R$ 100,45 |
-| 4️⃣ esporte_lazer | R$ 757K | R$ 126,40 |
-| 5️⃣ informatica_acessorios | R$ 689K | R$ 127,89 |
+| Categoria | Pedidos | Receita | Ticket médio |
+|---|---|---|---|
+| 🥇 beleza_saude | 7.056 | R$ 1,01M | R$ 139,50 |
+| 🥈 relogios_presentes | 4.811 | R$ 991K | R$ 199,88 |
+| 🥉 cama_mesa_banho | 7.113 | R$ 777K | R$ 100,45 |
+| 4️⃣ esporte_lazer | 5.895 | R$ 757K | R$ 126,40 |
+| 5️⃣ informatica_acessorios | 5.230 | R$ 689K | R$ 127,89 |
 
-O top 5 representa ~43% do faturamento total — mix diversificado, sem dependência crítica de uma categoria.
+O top 5 representa ~43% do faturamento total — mix diversificado, sem dependência crítica de uma categoria. Utilidade doméstica, bem-estar e lazer dominam o catálogo mais vendido.
 
 💡 **Recomendação:** Investir em categorias de alto ticket mas baixo volume (ex: PCs, R$ 1.223 de ticket médio) para aumentar receita sem prejudicar margem.
 
@@ -352,11 +628,44 @@ O top 5 representa ~43% do faturamento total — mix diversificado, sem dependê
 
 **Paid_search (12,3%) e organic_search (11,8%)** lideram em conversão e volume de leads. Social tem conversão baixa (5,6%) mas traz 75 conversões pelo alto volume. Display tem ciclo curto (10 dias vs 50-60 dos líderes) mas apenas 6 conversões totais.
 
-💡 **Recomendação:** Priorizar investimento em paid/organic search; otimizar social (alto volume, baixa conversão); reavaliar display (baixo retorno).
+<details>
+<summary><strong>📊 Output completo por canal</strong></summary>
+
+| Canal | Leads | Convertidos | Conversão % | Ciclo médio (dias) |
+|---|---|---|---|---|
+| paid_search | 1.586 | 195 | 12,30% | 56,6 |
+| organic_search | 2.296 | 271 | 11,80% | 50,0 |
+| direct_traffic | 499 | 56 | 11,22% | 31,1 |
+| referral | 284 | 24 | 8,45% | 32,5 |
+| social | 1.350 | 75 | 5,56% | 61,0 |
+| display | 118 | 6 | 5,08% | 10,3 |
+| email | 493 | 15 | 3,04% | 52,2 |
+
+> Canais `unknown`, `other` e `other_publicities` foram excluídos da análise por não serem rastreáveis.
+
+</details>
+
+💡 **Recomendações:**
+
+- **Priorizar investimento em paid_search e organic_search** — melhor ROI (maior conversão + alto volume). Paid_search já traz 195 conversões; aumentar investimento pode escalar ainda mais.
+- **Otimizar social** — tem volume alto (1.350 leads) mas conversão metade da média (5,6%). Melhorar qualidade dos leads ou jornada pós-clique pode dobrar as conversões sem aumentar custo de aquisição.
+- **Reavaliar display** — ciclo curto (10 dias) é atrativo, mas conversão de 5,1% e apenas 6 conversões totais sugerem baixo retorno. Considerar realocar orçamento para canais de maior conversão.
 
 ### 5️⃣ Existe relação entre baixo faturamento e maior risco de churn? (LTV, churn)
 
 **Sim, forte relação.** Sellers ativos (81,7%) têm LTV 6x maior que churned: R$ 459 vs R$ 74. Sellers ativos fazem 34 pedidos em média vs apenas 4 dos churned. O churn está associado a baixo engajamento nas primeiras vendas.
+
+<details>
+<summary><strong>📊 Output completo: Sellers ativos vs churned</strong></summary>
+
+> Critério de churn: sem vendas há mais de 180 dias (referência: 31/08/2018).
+
+| Status | # Sellers | % Sellers | LTV médio (R$) | Pedidos/seller | Dias desde última venda |
+|---|---|---|---|---|---|
+| Active | 2.192 | 81,73% | 459,24 | 34,05 | 43,9 |
+| Churned | 490 | 18,27% | 74,01 | 4,38 | 264,0 |
+
+</details>
 
 💡 **Recomendação:** Ações de suporte e onboarding focadas nas primeiras vendas para melhorar retenção de sellers novos.
 
