@@ -22,7 +22,7 @@ Em um ambiente de negócios, análises comerciais e de marketing são essenciais
 
 A Olist é uma plataforma brasileira de marketplace que conecta pequenos e médios vendedores (*sellers*) a grandes canais de venda. O dataset contém o histórico de pedidos, além de dados de captação de vendedores para a plataforma.
 
-## 🎯 Objetivos
+### 🎯 Objetivos
 
 Utilizando o dataset mencionado, o projeto busca responder às seguintes perguntas:
 
@@ -34,7 +34,7 @@ Utilizando o dataset mencionado, o projeto busca responder às seguintes pergunt
 
 > 💡 O dataset permitiria responder perguntas adicionais, mas para efeito deste MVP o escopo foi limitado às perguntas acima.
 
-## 📚 Documentação
+### 📚 Documentação
 
 O pipeline de dados foi criado seguindo a **arquitetura medalhão**, que permite rastreabilidade dos dados desde seu estado bruto até a disponibilização para análise:
 
@@ -187,7 +187,7 @@ Os arquivos foram salvos em `mvp_pucrio.raw_files.csv_files` (e também na pasta
 
 Como a intenção é criar um ambiente OLAP, foi utilizada a modelagem estrela:
 
-![](path)
+<img width="412" height="263" alt="image" src="https://github.com/user-attachments/assets/20a07c96-567c-44e2-ada9-5afe8da333ec" />
 
 #### `fato_vendas`
 
@@ -229,11 +229,12 @@ Para evitar a necessidade de configurar credenciais de API do Kaggle diretamente
 
 ### 🥉 Bronze
 
-Scripts: [`bronze.ipynb`](https://github.com/CY-PI/_DataEng_PUCRIO/blob/main/bronze.ipynb)
+Nesta camada, as tabelas são criadas na camada bronze, em seu formato raw, mas com tipos definidos.
+O script para esta camada está em: [`bronze.ipynb`](https://github.com/CY-PI/_DataEng_PUCRIO/blob/main/bronze.ipynb)
 
 Visão final da camada bronze no Databricks:
 
-![Camada Bronze](./media/image6.png)
+<img width="468" height="392" alt="image" src="https://github.com/user-attachments/assets/b081d00b-fe07-45f3-9a01-2d78118acf58" />
 
 ### 🥈 Silver
 
@@ -247,8 +248,8 @@ Antes de qualquer transformação, é feito um diagnóstico dos dados (nulos, du
 Scripts: [`silver.ipynb`](https://github.com/CY-PI/_DataEng_PUCRIO/blob/main/silver.ipynb)
 
 Visão final da camada silver no Databricks:
+<img width="468" height="388" alt="image" src="https://github.com/user-attachments/assets/eaebac2b-927b-4ccc-9abe-72f5e9d8c6b2" />
 
-![Camada Silver](./media/image7.png)
 
 ### 🥇 Gold
 
@@ -258,11 +259,15 @@ Também é implementado um **checksum de validação**, comparando a soma de `sa
 
 Scripts: [`gold.ipynb`](https://github.com/CY-PI/_DataEng_PUCRIO/blob/main/gold.ipynb) (inclui também a verificação de qualidade dos dados)
 
+Visão final da camada gold no Databricks:
+<img width="468" height="323" alt="image" src="https://github.com/user-attachments/assets/671d5c1a-c6e3-424c-bc95-c2613cbf5f6c" />
+
+
 ---
 
 ## ✅ Qualidade dos Dados
 
-Foram verificadas completude, consistência, unicidade e acurácia dos dados, além da identificação de outliers que pudessem distorcer análises estatísticas. Nenhum ajuste foi necessário — tudo documentado no notebook `gold` (link acima).
+Foram verificadas completude, consistência, unicidade e acurácia dos dados, além da identificação de outliers que pudessem distorcer análises estatísticas. Nenhum ajuste foi realizado — tudo documentado no notebook `gold` (link acima).
 
 ---
 
@@ -330,8 +335,8 @@ Por curiosidade, para automatizar a execução do pipeline de dados, foi criado 
 
 **Ordem dos notebooks:**
 
-![Ordem dos notebooks](./media/image8.png)
+<img width="492" height="121" alt="image" src="https://github.com/user-attachments/assets/ebef1d0d-bba4-44a0-912d-b77ecbf7bb74" />
 
 **Execuções (rodadas):**
 
-![Rodadas do pipeline](./media/image9.png)
+<img width="397" height="457" alt="image" src="https://github.com/user-attachments/assets/84fd3890-dc23-40dd-ab89-01aa0d251cd8" />
