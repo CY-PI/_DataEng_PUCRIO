@@ -255,7 +255,7 @@ Dimensão temporal para análises por período.
 
 Para evitar a necessidade de configurar credenciais de API do Kaggle diretamente no ambiente Databricks, os arquivos foram baixados manualmente e salvos no GitHub. O notebook de ingestão copia os CSVs do Git folder para o volume do Unity Catalog (`mvp_pucrio.raw_files.csv_files`).
 
-Script com explicações: [`ingestion.ipynb`](#) _(link será adicionado após subir para o GitHub)_
+Script com explicações: [`ingestion.ipynb`](#) _(link será adicionado)_
 
 ### 🥉 Bronze
 
