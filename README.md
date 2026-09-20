@@ -4,16 +4,16 @@
 
 ## 📑 Índice
 
-- [Contexto](#-contexto)
-- [Objetivos](#-objetivos)
-- [Documentação](#-documentação)
-- [Coleta de Dados](#-coleta-de-dados)
-- [Modelagem de Dados](#-modelagem-de-dados)
-- [Carga e Pipeline dos Dados](#-carga-e-pipeline-dos-dados)
-- [Qualidade dos Dados](#-qualidade-dos-dados)
-- [Análise dos Dados](#-análise-dos-dados)
-- [Auto-avaliação](#-auto-avaliação)
-- [Databricks Jobs & Pipeline](#-usando-databricks-jobs--pipeline)
+- [Contexto](#contexto)
+- [Objetivos](#objetivos)
+- [Documentação](#documentação)
+- [Coleta de Dados](#coleta-de-dados)
+- [Modelagem de Dados](#modelagem-de-dados)
+- [Carga e Pipeline dos Dados](#carga-e-pipeline-dos-dados)
+- [Qualidade dos Dados](#qualidade-dos-dados)
+- [Análise dos Dados](#análise-dos-dados)
+- [Auto-avaliação](#auto-avaliação)
+- [Databricks Jobs & Pipeline](#usando-databricks-jobs--pipeline)
 
 ---
 
