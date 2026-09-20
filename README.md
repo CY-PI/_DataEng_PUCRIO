@@ -169,15 +169,7 @@ Os arquivos foram salvos em `mvp_pucrio.raw_files.csv_files` (e também na pasta
 
 </details>
 
-**⚠️ Considerações:**
-
-1. Assume-se que a receita da plataforma vem de comissões por venda efetuada (10% do valor total do pagamento).
-2. Os "vendedores"/sellers são na verdade os clientes da plataforma.
-3. Originalmente há mais planilhas disponíveis no Kaggle; para simplificação, foram incluídas apenas as que atendem aos objetivos deste trabalho.
-
-> 🚧 **Pontos em aberto no rascunho original** (mantidos aqui para revisão, não removi porque pareciam anotações suas para revisar depois):
-> - Detalhar melhor o que significa "vendedores são os clientes da plataforma" (item 2 acima estava incompleto no original).
-> - Decidir se a explicação sobre comissões deveria vir antes, na seção de Contexto/Objetivos.
+**⚠️ Considerações:** Originalmente há mais planilhas disponíveis no Kaggle; para simplificação, foram incluídas apenas as que atendem aos objetivos deste trabalho.
 
 ---
 
@@ -206,6 +198,8 @@ Tabela fato de vendas com as métricas e dimensões necessárias para as anális
 | `quantity` | `INT` | Quantidade de itens vendidos na ordem | `bronze.order_items` — `COUNT` agregado | Maior que `0`; número inteiro |
 | `sales_value` | `DECIMAL` | Valor total vendido na ordem | `bronze.order_items` | Maior que `0`; intervalo de `0.85` a `6735.00` |
 | `commission` | `DECIMAL` | Comissão da plataforma sobre a venda | Calculada como `sales_value * 0.1` | 10% de `sales_value` |
+
+> 📌 **Premissa do MVP:** A taxa de 10% é uma simplificação adotada para este projeto — o dataset original não informa a comissão real da Olist. A coluna `commission` existe para viabilizar análises de receita da plataforma.
 
 #### `dim_leads`
 
@@ -308,57 +302,51 @@ Foram verificadas completude, consistência, unicidade e acurácia dos dados, al
 
 Script com explicações: [`analise.ipynb`](https://github.com/CY-PI/_DataEng_PUCRIO/blob/main/analise.ipynb)
 
+> 💡 **Nota:** Abaixo está um resumo das respostas. A análise completa com insights detalhados e recomendações de ação está disponível no notebook [`analise.ipynb`](https://github.com/CY-PI/_DataEng_PUCRIO/blob/main/analise.ipynb).
+
 Abaixo estão as respostas às perguntas iniciais do projeto.
 
 ### 1️⃣ Quais são os meses de maior pico?
 
-O total vendido vem aumentando gradativamente desde outubro/2016 até meados de 2018, com pico de vendas em **novembro/2017 (R$ 1M)** — provavelmente puxado pela Black Friday.
+**Novembro/2017 (R$ 1M)** — pico impulsionado pela Black Friday. As vendas crescem gradualmente de out/2016 até meados de 2018, mas caem 15% entre jul-set/2018 (de R$ 1M para R$ 850K), sugerindo sazonalidade ou perda de tração.
 
-> ⚠️ **Ponto de atenção:** entre julho e setembro/2018, as vendas caem de ~R$ 1M para ~R$ 850K (-15%). Pode indicar sazonalidade natural ou perda de tração da plataforma — vale investigar se a queda persiste nos meses seguintes.
+> 📊 **Período sugerido para análise:** set/2017 a ago/2018 (1 ano completo, após "estabilização" inicial da plataforma).
 
-Seria necessário um período maior (3 a 5 anos a partir de 2018) para confirmar picos de venda recorrentes. Para as **próximas análises**, o foco será o período de setembro/2017 a agosto/2018 (um ano completo), já que o período anterior parece ser o de início dos vendedores na plataforma, antes da estabilização das vendas.
+💡 **Recomendação:** Investigar se a queda em 2018 persiste nos meses seguintes para distinguir sazonalidade de perda de tração.
 
 ### 2️⃣ De onde vem a receita? A regra de Pareto se aplica aos vendedores?
 
-**516 dos 2.682 vendedores (19%)** detêm aproximadamente **80% das vendas**, confirmando a regra 80/20 de Pareto. Apenas **123 sellers (5%)** acumulam 50% do faturamento, enquanto o seller #1 sozinho responde por ~2% de todo o volume (R$ 203K em um ano).
+**Sim.** 19% dos sellers (516 de 2.682) detêm 80% das vendas, confirmando Pareto. O seller #1 sozinho responde por R$ 203K (2% do total). Os 81% restantes dividem apenas 20% das vendas — longa cauda típica de marketplaces.
 
-Entre os top 10, o ticket médio varia de **R$ 67** (alto volume, baixo valor por ordem) a **R$ 581** (baixo volume, alto valor por ordem) — dois modelos de negócio distintos entre os maiores sellers. Como a comissão é fixa em 10%, os top sellers também são os que mais geram receita para a plataforma (top seller: R$ 20,4K de comissão no período).
-
-Os 81% restantes (2.166 sellers) dividem apenas 20% das vendas — uma longa cauda de vendedores de baixo volume, padrão típico de marketplaces digitais.
+💡 **Recomendação:** Foco em retenção e crescimento dos top sellers; estratégias para ativar a cauda longa de baixo volume.
 
 ### 3️⃣ Quais segmentos de produto trazem mais receita?
 
-| Categoria | Receita | Pedidos | Ticket médio |
-|---|---|---|---|
-| 🥇 beleza_saude | R$ 1M | 7.043 | R$ 139,61 |
-| 🥈 relogios_presentes | R$ 988K | 4.802 | R$ 199,77 |
-| 🥉 cama_mesa_banho, esporte_lazer, informática | — | — | — |
+**beleza_saude lidera com R$ 1,01M** (7.056 pedidos). Top 5:
 
-`relogios_presentes` tem ticket médio bem maior que `beleza_saude`, indicando uma categoria mais cara e de menor volume. O top 5 confirma que utilidade doméstica, bem-estar e lazer dominam o catálogo mais vendido.
+| Categoria | Receita | Ticket médio |
+|---|---|---|
+| 🥇 beleza_saude | R$ 1,01M | R$ 139,50 |
+| 🥈 relogios_presentes | R$ 991K | R$ 199,88 |
+| 🥉 cama_mesa_banho | R$ 777K | R$ 100,45 |
+| 4️⃣ esporte_lazer | R$ 757K | R$ 126,40 |
+| 5️⃣ informatica_acessorios | R$ 689K | R$ 127,89 |
+
+O top 5 representa ~43% do faturamento total — mix diversificado, sem dependência crítica de uma categoria.
+
+💡 **Recomendação:** Investir em categorias de alto ticket mas baixo volume (ex: PCs, R$ 1.223 de ticket médio) para aumentar receita sem prejudicar margem.
 
 ### 4️⃣ Algum canal de marketing é melhor (conversão e ciclo de vendas)?
 
-| Canal | Conversão | Observação |
-|---|---|---|
-| Pesquisas pagas | 12,3% | Maior conversão e nº de leads |
-| Buscas orgânicas | 11,8% | Também líder em leads |
-| Tráfego direto | 11,2% | — |
-| Social | 5,6% | Baixa conversão, mas alto volume (75 leads convertidos) |
-| Display | 5,1% | Ciclo de vendas mais curto (10,3 dias) |
-| Email | 3,0% | Menor conversão |
+**Paid_search (12,3%) e organic_search (11,8%)** lideram em conversão e volume de leads. Social tem conversão baixa (5,6%) mas traz 75 conversões pelo alto volume. Display tem ciclo curto (10 dias vs 50-60 dos líderes) mas apenas 6 conversões totais.
 
-Apesar da conversão baixa, **social** traz mais leads convertidos (75) do que **referral** (23), que tem taxa de conversão um pouco maior. **Display** tem o ciclo de vendas mais curto (10,3 dias, contra 50–60 dias de paid/organic search), mas sua baixa conversão sugere que a rapidez não compensa o volume perdido.
+💡 **Recomendação:** Priorizar investimento em paid/organic search; otimizar social (alto volume, baixa conversão); reavaliar display (baixo retorno).
 
 ### 5️⃣ Existe relação entre baixo faturamento e maior risco de churn? (LTV, churn)
 
-Dos 2.682 sellers, **2.192 (81,7%) estão ativos** e **490 (18,3%) estão churned** (sem vendas há mais de 180 dias, referência 31/08/2018).
+**Sim, forte relação.** Sellers ativos (81,7%) têm LTV 6x maior que churned: R$ 459 vs R$ 74. Sellers ativos fazem 34 pedidos em média vs apenas 4 dos churned. O churn está associado a baixo engajamento nas primeiras vendas.
 
-| Status | LTV médio (comissão) | Pedidos médios |
-|---|---|---|
-| ✅ Ativo | R$ 459 | 34 |
-| ❌ Churned | R$ 74 | 4 |
-
-O LTV médio de um seller ativo é **~6x maior** que o de um churned, e sellers ativos vendem muito mais. Isso indica que o churn está associado a baixo engajamento — sellers que não conseguem crescer as vendas tendem a abandonar a plataforma, sugerindo que ações de suporte nas primeiras vendas poderiam impactar a retenção.
+💡 **Recomendação:** Ações de suporte e onboarding focadas nas primeiras vendas para melhorar retenção de sellers novos.
 
 ---
 
