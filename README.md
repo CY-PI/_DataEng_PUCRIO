@@ -369,10 +369,4 @@ Em uma indústria que valoriza experiência com IA na automação de projetos e 
 
 Por curiosidade, para automatizar a execução do pipeline de dados, foi criado um job utilizando a funcionalidade **Jobs & Pipelines** do Databricks.
 
-**Ordem dos notebooks:**
-
-<img width="492" height="121" alt="image" src="https://github.com/user-attachments/assets/ebef1d0d-bba4-44a0-912d-b77ecbf7bb74" />
-
-**Execuções (rodadas):**
-
-<img width="397" height="457" alt="image" src="https://github.com/user-attachments/assets/84fd3890-dc23-40dd-ab89-01aa0d251cd8" />
+<img width="548" height="254" alt="image" src="https://github.com/user-attachments/assets/666639ac-b7aa-4550-8b7b-ab2d8129c43f" />
