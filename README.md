@@ -249,6 +249,7 @@ Dimensão temporal para análises por período.
 | `quarter` | `INT` | Trimestre (Q1–Q4) | Calculado a partir de `month` | `1–4` |
 | `day_of_week` | `STRING` | Dia da semana | Extraído de `order_date` | `1–7` (`1 = Domingo`, `7 = Sábado`) |
 
+
 ---
 
 ## 🔄 Carga e Pipeline dos Dados
@@ -278,6 +279,7 @@ Antes de qualquer transformação, é feito um diagnóstico dos dados (nulos, du
 Scripts: [`silver.ipynb`](https://github.com/CY-PI/_DataEng_PUCRIO/blob/main/silver.ipynb)
 
 Visão final da camada silver no Databricks:
+
 <img width="468" height="388" alt="image" src="https://github.com/user-attachments/assets/eaebac2b-927b-4ccc-9abe-72f5e9d8c6b2" />
 
 
@@ -290,6 +292,7 @@ Também é implementado um **checksum de validação**, comparando a soma de `sa
 Scripts: [`gold.ipynb`](https://github.com/CY-PI/_DataEng_PUCRIO/blob/main/gold.ipynb) (inclui também a verificação de qualidade dos dados)
 
 Visão final da camada gold no Databricks:
+
 <img width="468" height="323" alt="image" src="https://github.com/user-attachments/assets/671d5c1a-c6e3-424c-bc95-c2613cbf5f6c" />
 
 
