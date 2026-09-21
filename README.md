@@ -623,7 +623,7 @@ Abaixo estão as respostas às perguntas iniciais do projeto, com insights e rec
 
 <br>
 
-💡 **Recomendação:** Investigar se a queda em 2018 persiste nos meses seguintes para distinguir sazonalidade de perda de tração.
+💡 **Recomendação:** Reforçar ações de retenção e reativação de sellers no período pós-Black Friday (dez–fev), historicamente mais fraco; investigar se a queda em 2018 persiste nos meses seguintes para distinguir sazonalidade de perda de tração.
 
 > ⚠️ Precisaríamos de um período maior (3 a 5 anos de 2018 em diante) para entender efetivamente se há picos de venda recorrentes. As **próximas análises** focam no período de setembro/2017 a agosto/2018, para ter um ano completo.
 
@@ -655,7 +655,7 @@ Abaixo estão as respostas às perguntas iniciais do projeto, com insights e rec
 
 <br>
 
-💡 **Recomendação:** Foco em retenção e crescimento dos top sellers; estratégias para ativar a cauda longa de baixo volume.
+💡 **Recomendação:** Apesar de confirmar a regra de Pareto, a receita está bem distribuída dentro do grupo dos 515 vendedores que mais vendem (o maior responde por apenas 2% do total), sendo aconselhável acompanhar de perto o desempenho deles e agir rápido se algum começar a vender menos. Já para o restante, é recomendável uma análise mais profunda para entender se têm poucos produtos cadastrados, se o preço não é competitivo, se falta divulgação, ou outro motivo e, com base nisso, definir o plano de ação.
 
 <br>
 
@@ -725,7 +725,7 @@ O top 5 representa ~43% do faturamento total — mix diversificado, sem dependê
 
 <br>
 
-💡 **Recomendação:** Ações de suporte e onboarding focadas nas primeiras vendas para melhorar retenção de sellers novos.
+💡 **Recomendação:** Como o abandono está ligado a vendedores que não conseguem vender bem logo no início, faria sentido identificar automaticamente quem fez a primeira venda mas não fez uma segunda depois de um tempo (por exemplo, 90 dias) e entrar em contato oferecendo ajuda.
 
 <br>
 
