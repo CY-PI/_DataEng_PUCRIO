@@ -15,6 +15,8 @@
 - [Auto-avaliação](#-auto-avaliação)
 - [Databricks Jobs & Pipeline](#databricks-jobs-pipeline)
 
+<br>
+
 ---
 
 ## 🧭 Contexto
@@ -47,6 +49,8 @@ O pipeline de dados foi criado seguindo a **arquitetura medalhão**, que permite
 
 O catálogo de dados no Databricks segue essa mesma divisão (bronze / silver / gold). Os notebooks são organizados em `ingestion`, `bronze`, `silver`, `gold`, `analise` e `common` (funções compartilhadas entre os notebooks silver e gold).
 
+<br>
+
 ---
 
 ## 📥 Coleta de Dados
@@ -61,7 +65,7 @@ Os arquivos utilizados neste projeto vêm do **Kaggle**, repositório que garant
 
 **⚠️ Considerações:** Originalmente há mais planilhas disponíveis no Kaggle; para simplificação, foram incluídas apenas as que atendem aos objetivos deste trabalho.
 
-Nem todas as colunas das tabelas abaixo são utilizadas no modelo final — as descartadas na camada Silver estão marcadas em *itálico* nas tabelas abaixo.
+Nem todas as colunas das tabelas abaixo são utilizadas no modelo final, já que não sã necessárias para responder as perguntas iniciais, que focam em vendas e indicadores de marketing. Elas foram descartadas na camada Silver e estão marcadas em *itálico* nas tabelas abaixo.
 
 Clique nas tabelas abaixo para visualizar detalhes.
 
@@ -174,6 +178,7 @@ Clique nas tabelas abaixo para visualizar detalhes.
 
 </details>
 
+<br>
 
 ---
 <a id="modelagem-de-dados"></a>
@@ -182,7 +187,8 @@ Clique nas tabelas abaixo para visualizar detalhes.
 
 ### ⭐ Modelo Estrela (Star Schema)
 
-Como a intenção é criar um ambiente OLAP, foi utilizada a modelagem estrela:
+Como a intenção é criar um ambiente OLAP, foi utilizada a modelagem estrela.
+Inicialmente o modelo incluía dim_sellers e dim_customer, mas ambas foram removidas. O motivo é que somente uma coluna de cada tabelas era relevante às perguntas de negócio definidas no objetivo, tornando essas dimensões desnecessárias para este escopo. Assim, seller_id e customer_state foram mantidas como atributo direto na fato_vendas. Essa é uma decisão que pode ser revista caso análises futuras exijam mais granularidade (ex.: cidade do vendedor, número de compradores/clientes).
 
 <img width="412" height="263" alt="image" src="https://github.com/user-attachments/assets/20a07c96-567c-44e2-ada9-5afe8da333ec" />
 
@@ -205,6 +211,8 @@ Tabela fato de vendas com as métricas e dimensões necessárias para as anális
 
 > 📌 **Premissa do MVP:** A taxa de 10% é uma simplificação adotada para este projeto — o dataset original não informa a comissão real da Olist. A coluna `commission` existe para viabilizar análises de receita da plataforma.
 
+<br>
+
 #### `dim_leads`
 
 Todos os leads qualificados de marketing (MQLs), incluindo tanto os que converteram em sellers quanto os que não converteram. Consolida informações de leads e conversão em uma única dimensão para facilitar análises de funil completo.
@@ -222,6 +230,7 @@ Todos os leads qualificados de marketing (MQLs), incluindo tanto os que converte
 | `won_date` | `DATE` | Data em que o lead se converteu em venda | Formato `YYYY-MM-DD`; `NULL` para leads não convertidos |
 | `sales_cycle` | `INT` | Tempo, em dias, entre o primeiro contato e a conversão | Calculado como `DATEDIFF(won_date, first_contact_date)`; inteiro positivo; `NULL` para leads não convertidos |
 
+<br>
 
 #### `dim_products`
 
@@ -234,6 +243,7 @@ Produtos disponíveis na plataforma.
 | `product_id` | `STRING` | PK — ID único do produto | Identificador único alfanumérico |
 | `category` | `STRING` | Categoria do produto | 74 categorias em português (ex.: `agro_industria_e_comercio`, `alimentos`, …); `"unknown"` para valores nulos |
 
+<br>
 
 #### `dim_dates`
 
@@ -247,6 +257,7 @@ Dimensão temporal para análises por período.
 | `quarter` | `INT` | Trimestre (Q1–Q4) | Calculado a partir de `month` | `1–4` |
 | `day_of_week` | `STRING` | Dia da semana | Extraído de `order_date` | `1–7` (`1 = Domingo`, `7 = Sábado`) |
 
+<br>
 
 ---
 
@@ -262,10 +273,14 @@ Visão final do volume raw_files.csv_files no Databricks:
 
 <img width="530" height="513" alt="image" src="https://github.com/user-attachments/assets/185038e6-4f3b-43ce-bf29-39440443a462" />
 
+<br>
 
 ### 🥉 Bronze
 
-Nesta camada, as tabelas são criadas na camada bronze, em seu formato raw, mas com **tipos definidos** (schemas explícitos em PySpark para cada tabela). Cada tabela recebe duas colunas de controle: `_source_file` (nome do arquivo CSV de origem) e `_ingested_at` (timestamp da carga). As tabelas são nomeadas removendo prefixos (`olist_`) e sufixos (`_dataset`) dos arquivos originais.
+As tabelas foram criadas na camada bronze, em seu formato raw, mas com **tipos definidos** (schemas explícitos em PySpark para cada tabela). Cada tabela recebe duas colunas de controle: `_source_file` (nome do arquivo CSV de origem) e `_ingested_at` (timestamp da carga). As tabelas são nomeadas removendo prefixos (`olist_`) e sufixos (`_dataset`) dos arquivos originais.
+Para escrever as tabelas, o modo overwrite foi utilizado neste MVP. No entanto, em um ambiente de produção, com atualizações recorrentes de dados, seria mais adequado usar uma estratégia incremental/MERGE, evitando reprocessar a base inteira a cada execução.
+
+<br>
 
 **Catálogo de Dados — Camada Bronze:**
 
@@ -399,9 +414,13 @@ Visão final da camada bronze no Databricks:
 
 <img width="468" height="392" alt="image" src="https://github.com/user-attachments/assets/b081d00b-fe07-45f3-9a01-2d78118acf58" />
 
+<br>
+
 ### 🥈 Silver
 
 Antes de qualquer transformação, é feito um diagnóstico dos dados (nulos, duplicados, inconsistências) para saber o que precisa ser limpo.
+
+<br>
 
 **Diagnóstico (dados brutos na camada Bronze):**
 
@@ -415,6 +434,8 @@ Antes de qualquer transformação, é feito um diagnóstico dos dados (nulos, du
 - **Consistência de valores categóricos:** também foram validados os estados (UFs brasileiras) em `customers` e `sellers`, e os status de pedido em `orders` (`delivered`, `shipped`, `canceled`, `processing`, `unavailable`, `invoiced`, `created`, `approved`). Nenhum valor inválido foi encontrado.
 - **Agregação necessária em `order_items`:** 112.650 linhas na origem, mas apenas 102.425 combinações únicas de `order_id + product_id + seller_id`. As 10.225 linhas restantes representam múltiplos itens do mesmo produto/seller dentro do mesmo pedido, que foram agregados (somando `price` em `sales_value` e contando em `quantity`).
 
+<br>
+
 **Transformações aplicadas:**
 
 1. Remoção de colunas fora do escopo do modelo final (ex.: `freight_value`, `shipping_limit_date`, `customer_unique_id`, etc.)
@@ -422,12 +443,16 @@ Antes de qualquer transformação, é feito um diagnóstico dos dados (nulos, du
 3. Substituição de valores ausentes por `"unknown"` (610 em `product_category_name`, 60 em `origin`)
 4. Definição de tipos explícitos (ex.: `order_purchase_timestamp` → `DATE` como `order_date`)
 
+<br>
+
 **Verificação pós-limpeza:**
 
 | Verificação | Resultado |
 |---|---|
 | Nulos em todas as tabelas silver | ✅ 0 |
 | Duplicados em todas as tabelas silver | ✅ 0 |
+
+<br>
 
 **Checksum (validação do agrupamento):**
 
@@ -439,16 +464,21 @@ Antes de qualquer transformação, é feito um diagnóstico dos dados (nulos, du
 
 O agrupamento não alterou o valor total de vendas — nenhuma venda foi perdida ou duplicada.
 
+<br>
+
 Script: [`silver.ipynb`](https://github.com/CY-PI/_DataEng_PUCRIO/blob/main/silver.ipynb)
 
 Visão final da camada silver no Databricks:
 
 <img width="468" height="388" alt="image" src="https://github.com/user-attachments/assets/eaebac2b-927b-4ccc-9abe-72f5e9d8c6b2" />
 
+<br>
 
 ### 🥇 Gold
 
 Na camada gold, as tabelas são criadas e documentadas conforme o modelo estrela definido acima, com constraints de Primary Key/Foreign Key (apenas informativos — não verificados pelo Databricks).
+
+<br>
 
 **Criação de `dim_leads`** — o `LEFT JOIN` com `closed_deals` preserva os leads que não foram convertidos, preenchendo `seller_id` com `"unknown"` via `COALESCE`. Isso permite análises de funil completo — desde o primeiro contato até a conversão — sem perder leads que não avançaram no funil:
 
@@ -465,6 +495,8 @@ FROM silver.marketing_qualified_leads mql
 LEFT JOIN silver.closed_deals cd
     ON mql.mql_id = cd.mql_id;
 ```
+
+<br>
 
 **Criação de `fato_vendas`** — a tabela fato envolve três joins:
 
@@ -496,6 +528,8 @@ LEFT JOIN silver.customers cust
     ON o.customer_id = cust.customer_id;
 ```
 
+<br>
+
 **Checksum (validação dos JOINs):**
 
 Comparando a soma de `sales_value` entre `silver.order_items` e `gold.fato_vendas`:
@@ -506,6 +540,8 @@ Comparando a soma de `sales_value` entre `silver.order_items` e `gold.fato_venda
 
 Os `JOIN`s não duplicaram nem perderam registros na tabela fato.
 
+<br>
+
 Script com explicações: [`gold.ipynb`](https://github.com/CY-PI/_DataEng_PUCRIO/blob/main/gold.ipynb) (inclui também a verificação de qualidade dos dados)
 
 Visão final da camada gold no Databricks:
@@ -513,6 +549,8 @@ Visão final da camada gold no Databricks:
 <img width="468" height="323" alt="image" src="https://github.com/user-attachments/assets/671d5c1a-c6e3-424c-bc95-c2613cbf5f6c" />
 
 > 📌 As funções utilitárias compartilhadas entre silver e gold estão no notebook [`common.ipynb`](https://github.com/CY-PI/_DataEng_PUCRIO/blob/main/common.ipynb), que é executado dentro de cada notebook.
+
+<br>
 
 ---
 
@@ -531,6 +569,8 @@ Foram verificadas completude, consistência, unicidade e acurácia dos dados, al
 | **Acurácia temporal** | ⚠️ `dim_leads` apresentou 17 registros de leads convertidos com `won_date` posterior à última data de venda registrada no dataset, e 1 registro com `won_date` anterior ao `first_contact_date` (inconsistência lógica — um negócio não pode ser fechado antes do primeiro contato). Optou-se por manter esses registros e documentar a limitação, já que representam menos de 0,1% da base de leads e não afetam as métricas de vendas (`fato_vendas`) — apenas análises específicas de ciclo de vendas que usem esses casos pontuais. |
 | **Outliers** | ⚠️ 4.195 linhas (~4% de `fato_vendas`) têm preço unitário fora do intervalo IQR esperado para o respectivo produto. Ao inspecionar os casos de maior valor, eles correspondem a categorias coerentes com preços altos (eletrônicos, relógios, informática, ferramentas de construção), com `quantity=1` — sugerindo variação legítima de preço (versões/modelos diferentes do mesmo `product_id`, ou mudança de preço ao longo do tempo) e não erro de digitação. Optou-se por não remover essas linhas, mas registrar a decisão. |
 
+<br>
+
 **Código das verificações de acurácia temporal e outliers:**
 
 ```python
@@ -546,6 +586,8 @@ def detect_outliers(df, table_name):
     ...
 ```
 
+<br>
+
 **Output da verificação:**
 
 - Acurácia temporal: 17 linhas com `won_date` no futuro + 1 com `won_date < first_contact_date`
@@ -553,6 +595,8 @@ def detect_outliers(df, table_name):
 - Resultado final: 🎉 Nenhuma tabela com problemas críticos — os encontrados foram documentados e mantidos
 
 </details>
+
+<br>
 
 ---
 
@@ -562,15 +606,24 @@ Script: [`analise.ipynb`](https://github.com/CY-PI/_DataEng_PUCRIO/blob/main/ana
 
 Abaixo estão as respostas às perguntas iniciais do projeto, com insights e recomendações de ação.
 
+<br>
+
 ### 1️⃣ Quais são os meses de maior pico?
+
+<img width="573" height="244" alt="image" src="https://github.com/user-attachments/assets/e266d724-9e93-4d3d-a06c-78377fcf0667" />
+
 
 **Novembro/2017 (R$ 1M)** — pico impulsionado pela Black Friday. As vendas crescem gradualmente de out/2016 até meados de 2018, mas caem 15% entre jul-set/2018 (de R$ 1M para R$ 850K), sugerindo sazonalidade ou perda de tração.
 
 > 📊 **Período sugerido para análise:** set/2017 a ago/2018 (1 ano completo, após "estabilização" inicial da plataforma).
 
+<br>
+
 💡 **Recomendação:** Investigar se a queda em 2018 persiste nos meses seguintes para distinguir sazonalidade de perda de tração.
 
 > ⚠️ Precisaríamos de um período maior (3 a 5 anos de 2018 em diante) para entender efetivamente se há picos de venda recorrentes. As **próximas análises** focam no período de setembro/2017 a agosto/2018, para ter um ano completo.
+
+<br>
 
 ### 2️⃣ De onde vem a receita? A regra de Pareto se aplica aos vendedores?
 
@@ -589,40 +642,33 @@ Abaixo estão as respostas às perguntas iniciais do projeto, com insights e rec
 </details>
 <br>
 <details>
-<summary><strong>📊 Top 10 sellers</strong></summary>
+<summary><strong>📊 Top sellers</strong></summary>
 
-| # | Seller | Pedidos | Vendas | Comissão | Ticket médio |
-|---|---|---|---|---|---|
-| 1 | `4869f7a5...` | 1.020 | R$ 203.825,70 | R$ 20.382,57 | R$ 199,83 |
-| 2 | `53243585...` | 324 | R$ 188.200,05 | R$ 18.819,98 | R$ 580,86 |
-| 3 | `fa1c13f2...` | 470 | R$ 151.480,64 | R$ 15.148,10 | R$ 322,30 |
-| 4 | `1025f0e2...` | 883 | R$ 133.528,15 | R$ 13.352,90 | R$ 151,22 |
-| 5 | `7c67e144...` | 667 | R$ 132.670,89 | R$ 13.267,38 | R$ 198,91 |
-| 6 | `955fee92...` | 1.259 | R$ 132.455,93 | R$ 13.245,66 | R$ 105,21 |
-| 7 | `da8622b1...` | 1.113 | R$ 132.255,37 | R$ 13.225,55 | R$ 118,83 |
-| 8 | `4a3ca931...` | 1.166 | R$ 128.034,73 | R$ 12.803,56 | R$ 109,81 |
-| 9 | `7d13fca1...` | 565 | R$ 113.628,97 | R$ 11.363,01 | R$ 201,11 |
-| 10 | `6560211a...` | 1.487 | R$ 100.024,88 | R$ 10.002,50 | R$ 67,27 |
+
+<img width="988" height="428" alt="image" src="https://github.com/user-attachments/assets/42c84960-3180-46c2-8d3c-a5cc53d755e2" />
 
 </details>
 
+<br>
+
 💡 **Recomendação:** Foco em retenção e crescimento dos top sellers; estratégias para ativar a cauda longa de baixo volume.
+
+<br>
 
 ### 3️⃣ Quais segmentos de produto trazem mais receita?
 
 **beleza_saude lidera com R$ 1,01M** (7.056 pedidos). Top 5:
 
-| Categoria | Pedidos | Receita | Ticket médio |
-|---|---|---|---|
-| 🥇 beleza_saude | 7.056 | R$ 1,01M | R$ 139,50 |
-| 🥈 relogios_presentes | 4.811 | R$ 991K | R$ 199,88 |
-| 🥉 cama_mesa_banho | 7.113 | R$ 777K | R$ 100,45 |
-| 4️⃣ esporte_lazer | 5.895 | R$ 757K | R$ 126,40 |
-| 5️⃣ informatica_acessorios | 5.230 | R$ 689K | R$ 127,89 |
+<img width="746" height="389" alt="image" src="https://github.com/user-attachments/assets/0f1e7af7-1941-44f0-a1ba-a94caca37515" />
+
 
 O top 5 representa ~43% do faturamento total — mix diversificado, sem dependência crítica de uma categoria. Utilidade doméstica, bem-estar e lazer dominam o catálogo mais vendido.
 
+<br>
+
 💡 **Recomendação:** Investir em categorias de alto ticket mas baixo volume (ex: PCs, R$ 1.223 de ticket médio) para aumentar receita sem prejudicar margem.
+
+<br>
 
 ### 4️⃣ Algum canal de marketing é melhor (conversão e ciclo de vendas)?
 
@@ -630,6 +676,9 @@ O top 5 representa ~43% do faturamento total — mix diversificado, sem dependê
 
 <details>
 <summary><strong>📊 Output completo por canal</strong></summary>
+
+<img width="987" height="255" alt="image" src="https://github.com/user-attachments/assets/b78591be-5cd3-41c1-8cd0-0595d158d5ef" />
+
 
 | Canal | Leads | Convertidos | Conversão % | Ciclo médio (dias) |
 |---|---|---|---|---|
@@ -645,11 +694,15 @@ O top 5 representa ~43% do faturamento total — mix diversificado, sem dependê
 
 </details>
 
+<br>
+
 💡 **Recomendações:**
 
 - **Priorizar investimento em paid_search e organic_search** — melhor ROI (maior conversão + alto volume). Paid_search já traz 195 conversões; aumentar investimento pode escalar ainda mais.
 - **Otimizar social** — tem volume alto (1.350 leads) mas conversão metade da média (5,6%). Melhorar qualidade dos leads ou jornada pós-clique pode dobrar as conversões sem aumentar custo de aquisição.
 - **Reavaliar display** — ciclo curto (10 dias) é atrativo, mas conversão de 5,1% e apenas 6 conversões totais sugerem baixo retorno. Considerar realocar orçamento para canais de maior conversão.
+
+<br>
 
 ### 5️⃣ Existe relação entre baixo faturamento e maior risco de churn? (LTV, churn)
 
@@ -660,6 +713,9 @@ O top 5 representa ~43% do faturamento total — mix diversificado, sem dependê
 
 > Critério de churn: sem vendas há mais de 180 dias (referência: 31/08/2018).
 
+<img width="886" height="116" alt="image" src="https://github.com/user-attachments/assets/92c66b25-ec5b-471e-b0ae-c69395ebe469" />
+
+
 | Status | # Sellers | % Sellers | LTV médio (R$) | Pedidos/seller | Dias desde última venda |
 |---|---|---|---|---|---|
 | Active | 2.192 | 81,73% | 459,24 | 34,05 | 43,9 |
@@ -667,16 +723,29 @@ O top 5 representa ~43% do faturamento total — mix diversificado, sem dependê
 
 </details>
 
+<br>
+
 💡 **Recomendação:** Ações de suporte e onboarding focadas nas primeiras vendas para melhorar retenção de sellers novos.
+
+<br>
 
 ---
 
 ## 📝 Auto-avaliação
 
-Neste projeto, aprendi a utilizar o Databricks e a aplicar a arquitetura medalhão. Percebi que a parte mais importante de um projeto de Engenharia de Dados é começar com o porquê para depois se importar com o como.
+Neste projeto, aprendi a utilizar o Databricks e a aplicar a arquitetura medalhão.
 Consegui responder a maior parte das perguntas que faziam parte do objetivo deste trabalho, com a ressalva de que o período de tempo do dataset era curto, com o primeiro ano ainda mostrando um estágio de crescimento da plataforma.
-O que eu mais me marcou, no entanto, foi a experiência de utilizar IA como ferramenta de trabalho. Comecei pedindo à "Genie" que validasse como eu estava pensando em começar o projeto, mas recebi boa parte do código pronta. Minha primeira reação foi negativa, fiquei irritada porque o ponto do MVP era eu fazer o projeto. A Genie deletou tudo e passou a me acompanhar na construção. Com o tempo, percebi que tarefas repetitivas, particularmente a documentação de tabelas, podiam ser delegadas, sem que eu perdesse o controle. Me sentindo mais confortável com o Databricks e percebendo como o uso da IA economizava tempo, passei a usá-la com mais confiança, inclusive quando decidi reestruturar drasticamente os notebooks (de um único para múltiplos).
+Um dos problemas que enfrentei foi uma certa indecisão quanto a estrutura dos dados e quanto a apresentação dos notebooks.
+Comecei o modelo star incluindo dim_customer e dim_sellers. No entanto, estas tabelas não eram realmente utilizadas - somente um campo de cada. Optei por remover, no entanto, talvez se no futuro buscasse mais granulosidade nas análises, seria interessante tê-las ali.
+Quanto a apresentação, primeiro optei por um notebook que incluísse tudo. Mas ficou extremamente longo e poluído. No meio do projeto, decidi construir um notebook para cada etapa do projeto.
+O que eu mais me marcou, no entanto, foi a experiência de utilizar IA como ferramenta de trabalho. Comecei pedindo à "Genie" que validasse como eu estava pensando em começar o projeto, mas recebi boa parte do código pronta. Minha primeira reação foi negativa, fiquei irritada porque o ponto do MVP era eu fazer o projeto. A Genie deletou tudo e passou a me acompanhar na construção. Com o tempo, percebi que tarefas repetitivas, particularmente a documentação de tabelas, podiam ser delegadas, sem que eu perdesse o controle. Me sentindo mais confortável com o Databricks e percebendo como o uso da IA economizava tempo, passei a usá-la com mais confiança, inclusive quando decidi reestruturar drasticamente os notebooks e remover tabelas. Não fosse a Genie, eu teria levado muito mais tempo para fazer estas mudanças.
 Em uma indústria que valoriza experiência com IA na automação de projetos e análises, visto em quase todas as vagas de emprego na área, este projeto foi extremamente importante para mim. No final, senti que eu era a pessoa pensando e salvando tempo porque tinha IA para fazer o pesado.
+Como trabalhos futuros, eu poderia:
+- Reintroduzir dim_customer e dim_sellers caso análises futuras precisem de mais granularidade geográfica ou de atributos de seller;
+- Migrar a carga da camada Bronze de overwrite para um modelo incremental/MERGE, mais adequado a um cenário de produção com atualizações recorrentes;
+- Investigar um período de dados mais longo, para distinguir com mais confiança sazonalidade de queda real de tração da plataforma.
+
+<br>
 
 ---
 <a id="databricks-jobs-pipeline"></a>
