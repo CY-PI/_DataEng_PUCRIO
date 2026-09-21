@@ -605,13 +605,17 @@ def detect_outliers(df, table_name):
 Script: [`analise.ipynb`](https://github.com/CY-PI/_DataEng_PUCRIO/blob/main/analise.ipynb)
 
 Abaixo estão as respostas às perguntas iniciais do projeto, com insights e recomendações de ação.
-
 <br>
 
 ### 1️⃣ Quais são os meses de maior pico?
+<br>
+
+<details>
+<summary><strong>📊 Vendas mensais — receita total por mês</strong></summary>
 
 <img width="573" height="244" alt="image" src="https://github.com/user-attachments/assets/e266d724-9e93-4d3d-a06c-78377fcf0667" />
 
+</details>
 
 **Novembro/2017 (R$ 1M)** — pico impulsionado pela Black Friday. As vendas crescem gradualmente de out/2016 até meados de 2018, mas caem 15% entre jul-set/2018 (de R$ 1M para R$ 850K), sugerindo sazonalidade ou perda de tração.
 
@@ -657,10 +661,15 @@ Abaixo estão as respostas às perguntas iniciais do projeto, com insights e rec
 
 ### 3️⃣ Quais segmentos de produto trazem mais receita?
 
-**beleza_saude lidera com R$ 1,01M** (7.056 pedidos). Top 5:
+**beleza_saude lidera com R$ 1,01M** (7.056 pedidos).
+<br> 
+
+<details>
+<summary><strong>📊 Categorias por receita</strong></summary>
 
 <img width="746" height="389" alt="image" src="https://github.com/user-attachments/assets/0f1e7af7-1941-44f0-a1ba-a94caca37515" />
 
+</details>
 
 O top 5 representa ~43% do faturamento total — mix diversificado, sem dependência crítica de uma categoria. Utilidade doméstica, bem-estar e lazer dominam o catálogo mais vendido.
 
@@ -680,15 +689,6 @@ O top 5 representa ~43% do faturamento total — mix diversificado, sem dependê
 <img width="987" height="255" alt="image" src="https://github.com/user-attachments/assets/b78591be-5cd3-41c1-8cd0-0595d158d5ef" />
 
 
-| Canal | Leads | Convertidos | Conversão % | Ciclo médio (dias) |
-|---|---|---|---|---|
-| paid_search | 1.586 | 195 | 12,30% | 56,6 |
-| organic_search | 2.296 | 271 | 11,80% | 50,0 |
-| direct_traffic | 499 | 56 | 11,22% | 31,1 |
-| referral | 284 | 24 | 8,45% | 32,5 |
-| social | 1.350 | 75 | 5,56% | 61,0 |
-| display | 118 | 6 | 5,08% | 10,3 |
-| email | 493 | 15 | 3,04% | 52,2 |
 
 > Canais `unknown`, `other` e `other_publicities` foram excluídos da análise por não serem rastreáveis.
 
