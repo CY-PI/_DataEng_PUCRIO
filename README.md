@@ -91,10 +91,10 @@ Clique nas tabelas abaixo para visualizar detalhes.
 
 | Coluna | Tipo |
 |---|---|
-| customer_id | string |
+| *customer_id* | string |
 | *customer_unique_id* | string |
-| customer_zip_code_prefix | int |
-| customer_city | string |
+| *customer_zip_code_prefix* | string |
+| *customer_city* | string |
 | customer_state | string |
 
 </details>
@@ -121,7 +121,7 @@ Clique nas tabelas abaixo para visualizar detalhes.
 | Coluna | Tipo |
 |---|---|
 | seller_id | string |
-| *seller_zip_code_prefix* | int |
+| *seller_zip_code_prefix* | string |
 | seller_city | string |
 | seller_state | string |
 
@@ -204,10 +204,12 @@ Tabela fato de vendas com as métricas e dimensões necessárias para as anális
 | `purchase_state` | `STRING` | Estado (UF) onde o pedido foi realizado | `silver.customers` — `customer_state` | Sigla de estado brasileiro com 2 letras |
 | `product_id` | `STRING` | FK do produto vendido | `bronze.order_items` | Valor alfanumérico |
 | `order_date` | `DATE` | FK da data da compra | `bronze.orders` — `order_purchase_timestamp` | Formato `YYYY-MM-DD`; intervalo de `2016-09-04` a `2018-10-17` |
-| `order_status` | `STRING` | Status atual da ordem no ciclo de vida do pedido | `bronze.orders` | `approved`, `canceled`, `created`, `delivered`, `invoiced`, `processing`, `shipped`, `unavailable` |
+| `order_status` | `STRING` | Status atual da ordem no ciclo de vida do pedido | `bronze.orders` | `approved`, `created`, `delivered`, `invoiced`, `processing`, `shipped` |
 | `quantity` | `INT` | Quantidade de itens vendidos na ordem | `bronze.order_items` — `COUNT` agregado | Maior que `0`; número inteiro |
 | `sales_value` | `DECIMAL` | Valor total vendido na ordem | `bronze.order_items` | Maior que `0`; intervalo de `0.85` a `6735.00` |
 | `commission` | `DECIMAL` | Comissão da plataforma sobre a venda | Calculada como `sales_value * 0.1` | 10% de `sales_value` |
+
+> 📌 **Exclusão de pedidos:** pedidos com `order_status` = `canceled` ou `unavailable` são excluídos da tabela fato, pois não representam vendas reais.
 
 > 📌 **Premissa do MVP:** A taxa de 10% é uma simplificação adotada para este projeto — o dataset original não informa a comissão real da Olist. A coluna `commission` existe para viabilizar análises de receita da plataforma.
 
@@ -293,6 +295,10 @@ Visão final do volume raw_files.csv_files no Databricks:
 As tabelas foram criadas na camada bronze, em seu formato raw, mas com **tipos definidos** (schemas explícitos em PySpark para cada tabela). Cada tabela recebe duas colunas de controle: `_source_file` (nome do arquivo CSV de origem) e `_ingested_at` (timestamp da carga). As tabelas são nomeadas removendo prefixos (`olist_`) e sufixos (`_dataset`) dos arquivos originais.
 Para escrever as tabelas, o modo overwrite foi utilizado neste MVP. No entanto, em um ambiente de produção, com atualizações recorrentes de dados, seria mais adequado usar uma estratégia incremental/MERGE, evitando reprocessar a base inteira a cada execução.
 
+Após a criação de cada tabela, a função `check_completion` verifica se o número de linhas na tabela bronze bate com o número de linhas do arquivo CSV de origem, confirmando que todas as linhas foram corretamente ingestadas.
+
+O script para esta camada está em: [`bronze.ipynb`](https://github.com/CY-PI/_DataEng_PUCRIO/blob/main/bronze.ipynb)
+
 <br>
 
 **Catálogo de Dados — Camada Bronze:**
@@ -303,125 +309,125 @@ Todas as tabelas e colunas foram documentadas no Unity Catalog via `COMMENT ON T
 <details>
 <summary><strong>📋 customers</strong> — Dados de clientes que realizaram compras na plataforma. Cada registro representa um cliente único identificado por customer_id.</summary>
 
-| Coluna | Tipo | Descrição |
-|---|---|---|
-| `customer_id` | `STRING` | ID único do cliente (PK) |
-| `customer_unique_id` | `STRING` | ID único universal do cliente — usado para identificar o mesmo cliente em múltiplos pedidos |
-| `customer_zip_code_prefix` | `INT` | Prefixo do CEP do cliente (primeiros 5 dígitos) |
-| `customer_city` | `STRING` | Cidade de residência do cliente |
-| `customer_state` | `STRING` | Estado (UF) de residência do cliente |
-| `_source_file` | `STRING` | Nome do arquivo CSV de origem |
-| `_ingested_at` | `TIMESTAMP` | Timestamp da carga |
+| Coluna | Tipo | Descrição | Domínio |
+|---|---|---|---|
+| `customer_id` | `STRING` | ID único do cliente (PK) | Identificador único alfanumérico |
+| `customer_unique_id` | `STRING` | ID único universal do cliente — usado para identificar o mesmo cliente em múltiplos pedidos | Identificador único alfanumérico |
+| `customer_zip_code_prefix` | `STRING` | Prefixo do CEP do cliente (primeiros 5 dígitos) | Prefixo de CEP (5 dígitos) |
+| `customer_city` | `STRING` | Cidade de residência do cliente | Cidades brasileiras |
+| `customer_state` | `STRING` | Estado (UF) de residência do cliente | Sigla de estado brasileiro (2 letras) |
+| `_source_file` | `STRING` | Nome do arquivo CSV de origem | Nome do arquivo CSV |
+| `_ingested_at` | `TIMESTAMP` | Timestamp da carga | Timestamp da carga |
 
 </details>
 <br>
 <details>
 <summary><strong>📋 orders</strong> — Pedidos realizados pelos clientes. Contém informações de status e timestamps do ciclo de vida do pedido (compra, aprovação, envio, entrega).</summary>
 
-| Coluna | Tipo | Descrição |
-|---|---|---|
-| `order_id` | `STRING` | ID único do pedido (PK) |
-| `customer_id` | `STRING` | ID do cliente que realizou o pedido (FK para customers) |
-| `order_status` | `STRING` | Status atual do pedido (delivered, shipped, canceled, etc) |
-| `order_purchase_timestamp` | `TIMESTAMP` | Data e hora da compra |
-| `order_approved_at` | `TIMESTAMP` | Data e hora da aprovação do pagamento |
-| `order_delivered_carrier_date` | `TIMESTAMP` | Data e hora da entrega ao transportador |
-| `order_delivered_customer_date` | `TIMESTAMP` | Data e hora da entrega ao cliente |
-| `order_estimated_delivery_date` | `TIMESTAMP` | Data estimada de entrega informada ao cliente |
-| `_source_file` | `STRING` | Nome do arquivo CSV de origem |
-| `_ingested_at` | `TIMESTAMP` | Timestamp da carga |
+| Coluna | Tipo | Descrição | Domínio |
+|---|---|---|---|
+| `order_id` | `STRING` | ID único do pedido (PK) | Identificador único alfanumérico |
+| `customer_id` | `STRING` | ID do cliente que realizou o pedido (FK para customers) | Identificador único alfanumérico |
+| `order_status` | `STRING` | Status atual do pedido | `approved`, `canceled`, `created`, `delivered`, `invoiced`, `processing`, `shipped`, `unavailable` |
+| `order_purchase_timestamp` | `TIMESTAMP` | Data e hora da compra | Formato `YYYY-MM-DD HH:MM:SS` |
+| `order_approved_at` | `TIMESTAMP` | Data e hora da aprovação do pagamento | Formato `YYYY-MM-DD HH:MM:SS`; nullable |
+| `order_delivered_carrier_date` | `TIMESTAMP` | Data e hora da entrega ao transportador | Formato `YYYY-MM-DD HH:MM:SS`; nullable |
+| `order_delivered_customer_date` | `TIMESTAMP` | Data e hora da entrega ao cliente | Formato `YYYY-MM-DD HH:MM:SS`; nullable |
+| `order_estimated_delivery_date` | `TIMESTAMP` | Data estimada de entrega informada ao cliente | Formato `YYYY-MM-DD HH:MM:SS`; nullable |
+| `_source_file` | `STRING` | Nome do arquivo CSV de origem | Nome do arquivo CSV |
+| `_ingested_at` | `TIMESTAMP` | Timestamp da carga | Timestamp da carga |
 
 </details>
 <br>
 <details>
 <summary><strong>📋 order_items</strong> — Itens individuais de cada pedido. Um pedido pode conter múltiplos itens. Relaciona pedidos com produtos e sellers.</summary>
 
-| Coluna | Tipo | Descrição |
-|---|---|---|
-| `order_id` | `STRING` | ID do pedido (PK composta, FK para orders) |
-| `order_item_id` | `INT` | Número sequencial do item dentro do pedido |
-| `product_id` | `STRING` | ID do produto (PK composta, FK para products) |
-| `seller_id` | `STRING` | ID do vendedor (PK composta, FK para sellers) |
-| `shipping_limit_date` | `TIMESTAMP` | Data limite para o seller enviar o produto ao transportador |
-| `price` | `DOUBLE` | Preço unitário do item (R$) |
-| `freight_value` | `DOUBLE` | Valor do frete deste item (R$) |
-| `_source_file` | `STRING` | Nome do arquivo CSV de origem |
-| `_ingested_at` | `TIMESTAMP` | Timestamp da carga |
+| Coluna | Tipo | Descrição | Domínio |
+|---|---|---|---|
+| `order_id` | `STRING` | ID do pedido (PK composta, FK para orders) | Identificador único alfanumérico |
+| `order_item_id` | `INT` | Número sequencial do item dentro do pedido | Inteiro >= 1 |
+| `product_id` | `STRING` | ID do produto (PK composta, FK para products) | Identificador único alfanumérico |
+| `seller_id` | `STRING` | ID do vendedor (PK composta, FK para sellers) | Identificador único alfanumérico |
+| `shipping_limit_date` | `TIMESTAMP` | Data limite para o seller enviar o produto ao transportador | Formato `YYYY-MM-DD HH:MM:SS` |
+| `price` | `DOUBLE` | Preço unitário do item (R$) | Valor positivo |
+| `freight_value` | `DOUBLE` | Valor do frete deste item (R$) | Valor >= 0 |
+| `_source_file` | `STRING` | Nome do arquivo CSV de origem | Nome do arquivo CSV |
+| `_ingested_at` | `TIMESTAMP` | Timestamp da carga | Timestamp da carga |
 
 </details>
 <br>
 <details>
 <summary><strong>📋 products</strong> — Catálogo de produtos disponíveis na plataforma. Inclui características físicas e descritivas dos produtos.</summary>
 
-| Coluna | Tipo | Descrição |
-|---|---|---|
-| `product_id` | `STRING` | ID único do produto (PK) |
-| `product_category_name` | `STRING` | Categoria do produto (em português) |
-| `product_name_lenght` | `INT` | Comprimento do nome do produto (número de caracteres) |
-| `product_description_lenght` | `INT` | Comprimento da descrição do produto (número de caracteres) |
-| `product_photos_qty` | `INT` | Quantidade de fotos do produto |
-| `product_weight_g` | `INT` | Peso do produto (gramas) |
-| `product_length_cm` | `INT` | Comprimento do produto (cm) |
-| `product_height_cm` | `INT` | Altura do produto (cm) |
-| `product_width_cm` | `INT` | Largura do produto (cm) |
-| `_source_file` | `STRING` | Nome do arquivo CSV de origem |
-| `_ingested_at` | `TIMESTAMP` | Timestamp da carga |
+| Coluna | Tipo | Descrição | Domínio |
+|---|---|---|---|
+| `product_id` | `STRING` | ID único do produto (PK) | Identificador único alfanumérico |
+| `product_category_name` | `STRING` | Categoria do produto (em português) | 74 categorias em português; nullable |
+| `product_name_lenght` | `INT` | Comprimento do nome do produto (número de caracteres) | Inteiro >= 0; nullable |
+| `product_description_lenght` | `INT` | Comprimento da descrição do produto (número de caracteres) | Inteiro >= 0; nullable |
+| `product_photos_qty` | `INT` | Quantidade de fotos do produto | Inteiro >= 0; nullable |
+| `product_weight_g` | `INT` | Peso do produto (gramas) | Inteiro > 0; nullable |
+| `product_length_cm` | `INT` | Comprimento do produto (cm) | Inteiro > 0; nullable |
+| `product_height_cm` | `INT` | Altura do produto (cm) | Inteiro > 0; nullable |
+| `product_width_cm` | `INT` | Largura do produto (cm) | Inteiro > 0; nullable |
+| `_source_file` | `STRING` | Nome do arquivo CSV de origem | Nome do arquivo CSV |
+| `_ingested_at` | `TIMESTAMP` | Timestamp da carga | Timestamp da carga |
 
 </details>
 <br>
 <details>
 <summary><strong>📋 sellers</strong> — Vendedores/fornecedores cadastrados na plataforma. Cada seller pode vender múltiplos produtos.</summary>
 
-| Coluna | Tipo | Descrição |
-|---|---|---|
-| `seller_id` | `STRING` | ID único do seller/vendedor (PK) |
-| `seller_zip_code_prefix` | `INT` | Prefixo do CEP do seller (primeiros 5 dígitos) |
-| `seller_city` | `STRING` | Cidade onde o seller está localizado |
-| `seller_state` | `STRING` | Estado (UF) onde o seller está localizado |
-| `_source_file` | `STRING` | Nome do arquivo CSV de origem |
-| `_ingested_at` | `TIMESTAMP` | Timestamp da carga |
+| Coluna | Tipo | Descrição | Domínio |
+|---|---|---|---|
+| `seller_id` | `STRING` | ID único do seller/vendedor (PK) | Identificador único alfanumérico |
+| `seller_zip_code_prefix` | `STRING` | Prefixo do CEP do seller (primeiros 5 dígitos) | Prefixo de CEP (5 dígitos) |
+| `seller_city` | `STRING` | Cidade onde o seller está localizado | Cidades brasileiras |
+| `seller_state` | `STRING` | Estado (UF) onde o seller está localizado | Sigla de estado brasileiro (2 letras) |
+| `_source_file` | `STRING` | Nome do arquivo CSV de origem | Nome do arquivo CSV |
+| `_ingested_at` | `TIMESTAMP` | Timestamp da carga | Timestamp da carga |
 
 </details>
 <br>
 <details>
 <summary><strong>📋 marketing_qualified_leads</strong> — Leads qualificados de marketing (MQLs). Prospects que demonstraram interesse e foram qualificados pelo time de marketing.</summary>
 
-| Coluna | Tipo | Descrição |
-|---|---|---|
-| `mql_id` | `STRING` | ID único do lead qualificado de marketing (PK) |
-| `first_contact_date` | `DATE` | Data do primeiro contato com o lead |
-| `landing_page_id` | `STRING` | ID da landing page de origem do lead |
-| `origin` | `STRING` | Canal de origem do lead (organic_search, paid_search, social, etc) |
-| `_source_file` | `STRING` | Nome do arquivo CSV de origem |
-| `_ingested_at` | `TIMESTAMP` | Timestamp da carga |
+| Coluna | Tipo | Descrição | Domínio |
+|---|---|---|---|
+| `mql_id` | `STRING` | ID único do lead qualificado de marketing (PK) | Identificador único alfanumérico |
+| `first_contact_date` | `DATE` | Data do primeiro contato com o lead | Formato `YYYY-MM-DD` |
+| `landing_page_id` | `STRING` | ID da landing page de origem do lead | Identificador alfanumérico |
+| `origin` | `STRING` | Canal de origem do lead | `direct_traffic`, `display`, `email`, `organic_search`, `other`, `other_publicities`, `paid_search`, `referral`, `social`, `unknown`; nullable |
+| `_source_file` | `STRING` | Nome do arquivo CSV de origem | Nome do arquivo CSV |
+| `_ingested_at` | `TIMESTAMP` | Timestamp da carga | Timestamp da carga |
 
 </details>
 <br>
 <details>
 <summary><strong>📋 closed_deals</strong> — Negócios fechados. Contém informações sobre leads que se converteram em sellers ativos na plataforma.</summary>
 
-| Coluna | Tipo | Descrição |
-|---|---|---|
-| `mql_id` | `STRING` | ID do lead (PK, FK para marketing_qualified_leads) |
-| `seller_id` | `STRING` | ID do seller resultante da conversão (FK para sellers) |
-| `sdr_id` | `STRING` | ID do SDR (Sales Development Representative) responsável |
-| `sr_id` | `STRING` | ID do SR (Sales Representative) responsável |
-| `won_date` | `TIMESTAMP` | Data e hora do fechamento do negócio |
-| `business_segment` | `STRING` | Segmento de negócio do seller (pet, health_beauty, electronics, etc) |
-| `lead_type` | `STRING` | Tipo/tamanho do lead (online_small, online_medium, online_big, etc) |
-| `lead_behaviour_profile` | `STRING` | Perfil comportamental do lead durante o processo de vendas |
-| `has_company` | `BOOLEAN` | Indica se o seller possui CNPJ |
-| `has_gtin` | `BOOLEAN` | Indica se o seller possui código GTIN nos produtos |
-| `average_stock` | `STRING` | Estoque médio declarado pelo seller |
-| `business_type` | `STRING` | Tipo de negócio (reseller, manufacturer, etc) |
-| `declared_product_catalog_size` | `DOUBLE` | Tamanho do catálogo de produtos declarado |
-| `declared_monthly_revenue` | `DOUBLE` | Receita mensal declarada (R$) |
-| `_source_file` | `STRING` | Nome do arquivo CSV de origem |
-| `_ingested_at` | `TIMESTAMP` | Timestamp da carga |
+| Coluna | Tipo | Descrição | Domínio |
+|---|---|---|---|
+| `mql_id` | `STRING` | ID do lead (PK, FK para marketing_qualified_leads) | Identificador único alfanumérico |
+| `seller_id` | `STRING` | ID do seller resultante da conversão (FK para sellers) | Identificador único alfanumérico |
+| `sdr_id` | `STRING` | ID do SDR (Sales Development Representative) responsável | Identificador alfanumérico |
+| `sr_id` | `STRING` | ID do SR (Sales Representative) responsável | Identificador alfanumérico |
+| `won_date` | `TIMESTAMP` | Data e hora do fechamento do negócio | Formato `YYYY-MM-DD HH:MM:SS` |
+| `business_segment` | `STRING` | Segmento de negócio do seller | Texto livre (ex.: `pet`, `health_beauty`, `electronics`) |
+| `lead_type` | `STRING` | Tipo/tamanho do lead | `online_small`, `online_medium`, `online_big`, etc |
+| `lead_behaviour_profile` | `STRING` | Perfil comportamental do lead durante o processo de vendas | Texto livre; nullable |
+| `has_company` | `BOOLEAN` | Indica se o seller possui CNPJ | `true`/`false`; nullable |
+| `has_gtin` | `BOOLEAN` | Indica se o seller possui código GTIN nos produtos | `true`/`false`; nullable |
+| `average_stock` | `STRING` | Estoque médio declarado pelo seller | Texto livre; nullable |
+| `business_type` | `STRING` | Tipo de negócio | `reseller`, `manufacturer`, etc; nullable |
+| `declared_product_catalog_size` | `DOUBLE` | Tamanho do catálogo de produtos declarado | Valor >= 0; nullable |
+| `declared_monthly_revenue` | `DOUBLE` | Receita mensal declarada (R$) | Valor >= 0; nullable |
+| `_source_file` | `STRING` | Nome do arquivo CSV de origem | Nome do arquivo CSV |
+| `_ingested_at` | `TIMESTAMP` | Timestamp da carga | Timestamp da carga |
 
 </details>
 
-O script para esta camada está em: [`bronze.ipynb`](https://github.com/CY-PI/_DataEng_PUCRIO/blob/main/bronze.ipynb)
+<br>
 
 Visão final da camada bronze no Databricks:
 
@@ -518,6 +524,8 @@ LEFT JOIN silver.closed_deals cd
 
 A comissão da plataforma é fixa em 10% sobre o valor da venda: `ROUND(sales_value * 0.10, 2)`.
 
+> 📌 **Filtro de pedidos:** pedidos com `order_status` = `canceled` ou `unavailable` são excluídos da tabela fato via `WHERE`, pois não representam vendas reais.
+
 ```sql
 CREATE OR REPLACE TABLE fato_vendas AS
 SELECT 
@@ -537,14 +545,15 @@ INNER JOIN silver.order_items oi
 LEFT JOIN silver.closed_deals c 
     ON oi.seller_id = c.seller_id
 LEFT JOIN silver.customers cust
-    ON o.customer_id = cust.customer_id;
+    ON o.customer_id = cust.customer_id
+WHERE o.order_status NOT IN ('canceled', 'unavailable');
 ```
 
 <br>
 
 **Checksum (validação dos JOINs):**
 
-Comparando a soma de `sales_value` entre `silver.order_items` e `gold.fato_vendas`:
+Comparando a soma de `sales_value` entre `silver.order_items` e `gold.fato_vendas` (apenas pedidos válidos — `canceled` e `unavailable` excluídos da fato_vendas):
 
 | Comparação | Resultado |
 |---|---|
@@ -576,10 +585,11 @@ Foram verificadas completude, consistência, unicidade e acurácia dos dados, al
 | Dimensão | Resultado |
 |---|---|
 | **Completude** | ✅ Nenhuma tabela apresentou valores nulos nas colunas do modelo. A limpeza feita na camada Silver (valores ausentes preenchidos com `"unknown"`) garantiu completude até a camada final. |
-| **Consistência** | ✅ Validada em dois níveis: (1) integridade referencial garantida pelas constraints de FK (`fk_fato_leads`, `fk_fato_produtos`, `fk_fato_dates`, `fk_fato_sellers`) e PK composta em `fato_vendas`; (2) checksum entre `silver.order_items` e `fato_vendas` confirmou que os joins não alteraram o valor total de vendas. A consistência de valores categóricos (estados, status de pedido) já foi verificada na camada Silver e chega à Gold por herança. |
+| **Consistência** | ✅ Validada em dois níveis: (1) integridade referencial garantida pelas constraints de FK (`fk_fato_leads`, `fk_fato_produtos`, `fk_fato_dates`, `fk_fato_sellers`) e PK composta em `fato_vendas`; (2) checksum entre `silver.order_items` e `fato_vendas` confirmou que os joins não alteraram o valor de vendas (apenas pedidos válidos — `canceled` e `unavailable` excluídos da fato_vendas). A consistência de valores categóricos (estados, status de pedido) já foi verificada na camada Silver e chega à Gold por herança. |
 | **Unicidade** | ✅ Não há linhas duplicadas nem violação da chave composta primária (`order_id + product_id + seller_id`) na tabela `fato_vendas`. |
 | **Acurácia temporal** | ⚠️ `dim_leads` apresentou 17 registros de leads convertidos com `won_date` posterior à última data de venda registrada no dataset, e 1 registro com `won_date` anterior ao `first_contact_date` (inconsistência lógica — um negócio não pode ser fechado antes do primeiro contato). Optou-se por manter esses registros e documentar a limitação, já que representam menos de 0,1% da base de leads e não afetam as métricas de vendas (`fato_vendas`) — apenas análises específicas de ciclo de vendas que usem esses casos pontuais. |
 | **Outliers** | ⚠️ 4.195 linhas (~4% de `fato_vendas`) têm preço unitário fora do intervalo IQR esperado para o respectivo produto. Ao inspecionar os casos de maior valor, eles correspondem a categorias coerentes com preços altos (eletrônicos, relógios, informática, ferramentas de construção), com `quantity=1` — sugerindo variação legítima de preço (versões/modelos diferentes do mesmo `product_id`, ou mudança de preço ao longo do tempo) e não erro de digitação. Optou-se por não remover essas linhas, mas registrar a decisão. |
+| **Validação de `sales_value`** | ✅ Como pedidos `canceled` e `unavailable` foram excluídos da `fato_vendas`, não há valores negativos em `sales_value` (verificado). Todas as vendas na tabela fato representam transações reais. |
 
 <br>
 
@@ -643,7 +653,7 @@ Abaixo estão as respostas às perguntas iniciais do projeto, com insights e rec
 
 ### 2️⃣ De onde vem a receita? A regra de Pareto se aplica aos vendedores?
 
-**Sim.** 19% dos sellers (515 de 2.682) detêm 80% das vendas, confirmando Pareto. O seller #1 sozinho responde por R$ 203K (2% do total). Entre os top 10, o ticket médio varia de R$ 67 a R$ 581, revelando dois modelos de negócio distintos entre os maiores sellers. Como a comissão é fixa em 10%, os top sellers também são os que mais geram receita para a plataforma (top seller: R$ 20,4K de comissão no período). Os 81% restantes (2.167 sellers) dividem apenas 20% das vendas — longa cauda típica de marketplaces.
+**Sim.** 19,3% dos sellers (512 de 2.653) detêm 80% das vendas, confirmando Pareto. O seller #1 sozinho responde por R$ 203K (2% do total). Entre os top 10, o ticket médio varia de R$ 67 a R$ 581, revelando dois modelos de negócio distintos entre os maiores sellers. Como a comissão é fixa em 10%, os top sellers também são os que mais geram receita para a plataforma (top seller: R$ 20,4K de comissão no período). Os 81% restantes (2.141 sellers) dividem apenas 20% das vendas — longa cauda típica de marketplaces.
 
 
 <br>
@@ -652,8 +662,8 @@ Abaixo estão as respostas às perguntas iniciais do projeto, com insights e rec
 
 | Grupo | # Sellers | % Sellers | Pedidos | Vendas | % Vendas | Comissão | Ticket médio |
 |---|---|---|---|---|---|---|---|
-| Top 19% | 515 | 19,2% | 56.875 | R$ 8.341.945,67 | 80% | R$ 834.214,93 | R$ 330,01 |
-| Restante 81% | 2.167 | 80,8% | 19.901 | R$ 2.086.911,79 | 20% | R$ 208.697,65 | R$ 158,90 |
+| Top 19% | 512 | 19,3% | 56.646 | R$ 8.294.050,98 | 80% | R$ 829.425,36 | R$ 324,22 |
+| Restante 81% | 2.141 | 80,7% | 19.813 | R$ 2.074.772,89 | 20% | R$ 207.483,75 | R$ 159,54 |
 
 </details>
 <br>
@@ -667,7 +677,7 @@ Abaixo estão as respostas às perguntas iniciais do projeto, com insights e rec
 
 <br>
 
-💡 **Recomendação:** Apesar de confirmar a regra de Pareto, a receita está bem distribuída dentro do grupo dos 515 vendedores que mais vendem (o maior responde por apenas 2% do total), sendo aconselhável acompanhar de perto o desempenho deles e agir rápido se algum começar a vender menos. Já para o restante, é recomendável uma análise mais profunda para entender se têm poucos produtos cadastrados, se o preço não é competitivo, se falta divulgação, ou outro motivo e, com base nisso, definir o plano de ação.
+💡 **Recomendação:** Apesar de confirmar a regra de Pareto, a receita está bem distribuída dentro do grupo dos 512 vendedores que mais vendem (o maior responde por apenas 2% do total), sendo aconselhável acompanhar de perto o desempenho deles e agir rápido se algum começar a vender menos. Já para o restante, é recomendável uma análise mais profunda para entender se têm poucos produtos cadastrados, se o preço não é competitivo, se falta divulgação, ou outro motivo e, com base nisso, definir o plano de ação.
 
 <br>
 
@@ -718,7 +728,7 @@ O top 5 representa ~43% do faturamento total — mix diversificado, sem dependê
 
 ### 5️⃣ Existe relação entre baixo faturamento e maior risco de churn? (LTV, churn)
 
-**Sim, forte relação.** Sellers ativos (81,7%) têm LTV 6x maior que churned: R$ 459 vs R$ 74. Sellers ativos fazem 34 pedidos em média vs apenas 4 dos churned. O churn está associado a baixo engajamento nas primeiras vendas.
+**Sim, forte relação.** Sellers ativos (81,6%) têm LTV 6,3x maior que churned: R$ 462 vs R$ 73. Sellers ativos fazem 34 pedidos em média vs apenas 4 dos churned. O churn está associado a baixo engajamento nas primeiras vendas.
 
 <details>
 <summary><strong>📊 Output completo: Sellers ativos vs churned</strong></summary>
@@ -730,8 +740,8 @@ O top 5 representa ~43% do faturamento total — mix diversificado, sem dependê
 
 | Status | # Sellers | % Sellers | LTV médio (R$) | Pedidos/seller | Dias desde última venda |
 |---|---|---|---|---|---|
-| Active | 2.192 | 81,73% | 459,24 | 34,05 | 43,9 |
-| Churned | 490 | 18,27% | 74,01 | 4,38 | 264,0 |
+| Active | 2.166 | 81,64% | 462,22 | 34,31 | 43,8 |
+| Churned | 487 | 18,36% | 73,38 | 4,40 | 264,7 |
 
 </details>
 
