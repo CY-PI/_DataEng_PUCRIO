@@ -663,7 +663,7 @@ Abaixo estão as respostas às perguntas iniciais do projeto, com insights e rec
 
 <br>
 <details>
-<summary><strong>📊 Sumário: Top 19% vs Restante 81% (clique aqui para output)</strong></summary>
+<summary><strong>📊 Sumário: Top 19% vs Restante 81% (clique aqui para detalhes)</strong></summary>
 
 | Grupo | # Sellers | % Sellers | Pedidos | Vendas | % Vendas | Comissão | Ticket médio |
 |---|---|---|---|---|---|---|---|
@@ -673,7 +673,7 @@ Abaixo estão as respostas às perguntas iniciais do projeto, com insights e rec
 </details>
 <br>
 <details>
-<summary><strong>📊 Top sellers (clique aqui para detalhes)</strong></summary>
+<summary><strong>📊 Top sellers (clique aqui para output)</strong></summary>
 
 
 <img width="989" height="419" alt="image" src="https://github.com/user-attachments/assets/c6c5bc57-79bd-44ad-ae0c-2d0302f90ca2" />
