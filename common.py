@@ -28,6 +28,7 @@ def get_columns_to_model():
         "won_date", "sales_cycle",
         "customer_city", "customer_state",
         "seller_city", "seller_state",
+        "purchase_state",
         "price", "sales_value", "commission", "quantity",
         "product_category_name", "category",
         "order_purchase_timestamp", "order_date",
@@ -51,6 +52,7 @@ def get_pks(schema):
     }
     pk_gold = {
         "dim_leads": "mql_id",
+        "dim_sellers": "seller_id",
         "dim_produtos": "product_id",
         "dim_dates": "order_date",
         "fato_vendas": ["order_id", "product_id", "seller_id"],

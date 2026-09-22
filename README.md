@@ -188,7 +188,7 @@ Clique nas tabelas abaixo para visualizar detalhes.
 ### ⭐ Modelo Estrela (Star Schema)
 
 Como a intenção é criar um ambiente OLAP, foi utilizada a modelagem estrela.
-Inicialmente o modelo incluía dim_sellers e dim_customer, mas ambas foram removidas. O motivo é que somente uma coluna de cada tabelas era relevante às perguntas de negócio definidas no objetivo, tornando essas dimensões desnecessárias para este escopo. Assim, seller_id e customer_state foram mantidas como atributo direto na fato_vendas. Essa é uma decisão que pode ser revista caso análises futuras exijam mais granularidade (ex.: cidade do vendedor, número de compradores/clientes).
+Inicialmente o modelo incluía dim_customer, mas esta dimensão foi removida, pois somente uma coluna era relevante às perguntas de negócio definidas no objetivo. `purchase_state` (estado onde o pedido foi realizado) é o único atributo necessário e está mantido diretamente na fato_vendas. Essa decisão pode ser revista caso análises futuras exijam mais granularidade de cliente (ex.: número de compradores).
 
 <img width="412" height="263" alt="image" src="https://github.com/user-attachments/assets/20a07c96-567c-44e2-ada9-5afe8da333ec" />
 
@@ -200,8 +200,8 @@ Tabela fato de vendas com as métricas e dimensões necessárias para as anális
 |---|---|---|---|---|
 | `order_id` | `STRING` | PK — ID único da ordem | `bronze.orders` | Identificador único alfanumérico |
 | `mql_id` | `STRING` | FK do lead de marketing que originou essa venda, quando aplicável | `silver.closed_deals` via `LEFT JOIN` | Nullable; nem toda venda tem lead associado |
-| `seller_id` | `STRING` | Vendedor na plataforma. Representa o real cliente da plataforma | `bronze.sellers` | Valor alfanumérico |
-| `customer_state` | `STRING` | Estado onde o pedido foi realizado | `bronze.customers` | Sigla de estado brasileiro com 2 letras |
+| `seller_id` | `STRING` | FK → `dim_sellers.seller_id` — Vendedor na plataforma. Representa o real cliente da plataforma | `bronze.sellers` via `dim_sellers` | Valor alfanumérico |
+| `purchase_state` | `STRING` | Estado (UF) onde o pedido foi realizado | `silver.customers` — `customer_state` | Sigla de estado brasileiro com 2 letras |
 | `product_id` | `STRING` | FK do produto vendido | `bronze.order_items` | Valor alfanumérico |
 | `order_date` | `DATE` | FK da data da compra | `bronze.orders` — `order_purchase_timestamp` | Formato `YYYY-MM-DD`; intervalo de `2016-09-04` a `2018-10-17` |
 | `order_status` | `STRING` | Status atual da ordem no ciclo de vida do pedido | `bronze.orders` | `approved`, `canceled`, `created`, `delivered`, `invoiced`, `processing`, `shipped`, `unavailable` |
@@ -217,18 +217,31 @@ Tabela fato de vendas com as métricas e dimensões necessárias para as anális
 
 Todos os leads qualificados de marketing (MQLs), incluindo tanto os que converteram em sellers quanto os que não converteram. Consolida informações de leads e conversão em uma única dimensão para facilitar análises de funil completo.
 
-**Justificativa da modelagem:** a Primary Key desta tabela é `mql_id`, pois é a única coluna sempre não-nula e única. `seller_id` não pode ser usado como PK porque é `NULL` para todos os leads não convertidos — assim como `won_date`, `sales_cycle`, `business_segment` e `lead_type`.
+**Justificativa da modelagem:** a Primary Key desta tabela é `mql_id`, pois é a única coluna sempre não-nula e única. `won_date` e `sales_cycle` são `NULL` para leads não convertidos.
 
 *Origem:* `bronze.marketing_qualified_leads` + `bronze.closed_deals` (para os convertidos).
 
 | Coluna | Tipo | Descrição | Domínio |
 |---|---|---|---|
 | `mql_id` | `STRING` | PK — ID único do lead | Identificador único alfanumérico |
-| `seller_id` | `STRING` | Vendedor para o qual o lead converteu, quando aplicável | Alfanumérico; `NULL` para leads não convertidos |
 | `origin` | `STRING` | Canal pelo qual o lead chegou | `direct_traffic`, `display`, `email`, `organic_search`, `other`, `other_publicities`, `paid_search`, `referral`, `social`, `unknown` |
 | `first_contact_date` | `DATE` | Data do primeiro contato | Formato `YYYY-MM-DD` |
 | `won_date` | `DATE` | Data em que o lead se converteu em venda | Formato `YYYY-MM-DD`; `NULL` para leads não convertidos |
 | `sales_cycle` | `INT` | Tempo, em dias, entre o primeiro contato e a conversão | Calculado como `DATEDIFF(won_date, first_contact_date)`; inteiro positivo; `NULL` para leads não convertidos |
+
+<br>
+
+#### `dim_sellers`
+
+Vendedores cadastrados na plataforma. Permite análises geográficas por cidade e estado.
+
+*Origem:* `silver.sellers`
+
+| Coluna | Tipo | Descrição | Domínio |
+|---|---|---|---|
+| `seller_id` | `STRING` | PK — ID único do seller | Identificador único alfanumérico |
+| `seller_city` | `STRING` | Cidade onde o seller está localizado | Cidades brasileiras; `"unknown"` para valores nulos |
+| `seller_state` | `STRING` | Estado (UF) onde o seller está localizado | Sigla de estado brasileiro com 2 letras |
 
 <br>
 
@@ -480,13 +493,12 @@ Na camada gold, as tabelas são criadas e documentadas conforme o modelo estrela
 
 <br>
 
-**Criação de `dim_leads`** — o `LEFT JOIN` com `closed_deals` preserva os leads que não foram convertidos, preenchendo `seller_id` com `"unknown"` via `COALESCE`. Isso permite análises de funil completo — desde o primeiro contato até a conversão — sem perder leads que não avançaram no funil:
+**Criação de `dim_leads`** — o `LEFT JOIN` com `closed_deals` preserva os leads que não foram convertidos, preenchendo `won_date` e `sales_cycle` com `NULL`. Isso permite análises de funil completo — desde o primeiro contato até a conversão — sem perder leads que não avançaram no funil:
 
 ```sql
 CREATE OR REPLACE TABLE dim_leads AS
 SELECT 
     mql.mql_id,
-    COALESCE(cd.seller_id, 'unknown') AS seller_id,
     mql.origin,
     mql.first_contact_date,
     CAST(cd.won_date AS DATE) AS won_date,
@@ -502,7 +514,7 @@ LEFT JOIN silver.closed_deals cd
 
 1. `INNER JOIN` entre `orders` e `order_items` — cada linha da fato representa um item vendido dentro de uma ordem.
 2. `LEFT JOIN` com `closed_deals` **no nível do seller** (por `seller_id`, não por `order_id`) — toda venda de um seller herda o mesmo `mql_id`, ou seja, o canal de aquisição é atribuído ao seller, não à venda individual. Sellers sem lead rastreado recebem `"unknown"`.
-3. `LEFT JOIN` com `customers` (por `customer_id`) — traz `customer_state`, representando o local onde o produto foi vendido.
+3. `LEFT JOIN` com `customers` (por `customer_id`) — traz `purchase_state` (estado do cliente), representando o local onde o produto foi vendido.
 
 A comissão da plataforma é fixa em 10% sobre o valor da venda: `ROUND(sales_value * 0.10, 2)`.
 
@@ -512,7 +524,7 @@ SELECT
     o.order_id,
     COALESCE(c.mql_id, "unknown") AS mql_id,
     oi.seller_id,
-    cust.customer_state,
+    cust.customer_state AS purchase_state,
     oi.product_id,
     CAST(o.order_purchase_timestamp AS DATE) AS order_date,
     COALESCE(o.order_status, 'unknown') AS order_status,
@@ -564,7 +576,7 @@ Foram verificadas completude, consistência, unicidade e acurácia dos dados, al
 | Dimensão | Resultado |
 |---|---|
 | **Completude** | ✅ Nenhuma tabela apresentou valores nulos nas colunas do modelo. A limpeza feita na camada Silver (valores ausentes preenchidos com `"unknown"`) garantiu completude até a camada final. |
-| **Consistência** | ✅ Validada em dois níveis: (1) integridade referencial garantida pelas constraints de FK (`fk_fato_leads`, `fk_fato_produtos`, `fk_fato_dates`) e PK composta em `fato_vendas`; (2) checksum entre `silver.order_items` e `fato_vendas` confirmou que os joins não alteraram o valor total de vendas. A consistência de valores categóricos (estados, status de pedido) já foi verificada na camada Silver e chega à Gold por herança. |
+| **Consistência** | ✅ Validada em dois níveis: (1) integridade referencial garantida pelas constraints de FK (`fk_fato_leads`, `fk_fato_produtos`, `fk_fato_dates`, `fk_fato_sellers`) e PK composta em `fato_vendas`; (2) checksum entre `silver.order_items` e `fato_vendas` confirmou que os joins não alteraram o valor total de vendas. A consistência de valores categóricos (estados, status de pedido) já foi verificada na camada Silver e chega à Gold por herança. |
 | **Unicidade** | ✅ Não há linhas duplicadas nem violação da chave composta primária (`order_id + product_id + seller_id`) na tabela `fato_vendas`. |
 | **Acurácia temporal** | ⚠️ `dim_leads` apresentou 17 registros de leads convertidos com `won_date` posterior à última data de venda registrada no dataset, e 1 registro com `won_date` anterior ao `first_contact_date` (inconsistência lógica — um negócio não pode ser fechado antes do primeiro contato). Optou-se por manter esses registros e documentar a limitação, já que representam menos de 0,1% da base de leads e não afetam as métricas de vendas (`fato_vendas`) — apenas análises específicas de ciclo de vendas que usem esses casos pontuais. |
 | **Outliers** | ⚠️ 4.195 linhas (~4% de `fato_vendas`) têm preço unitário fora do intervalo IQR esperado para o respectivo produto. Ao inspecionar os casos de maior valor, eles correspondem a categorias coerentes com preços altos (eletrônicos, relógios, informática, ferramentas de construção), com `quantity=1` — sugerindo variação legítima de preço (versões/modelos diferentes do mesmo `product_id`, ou mudança de preço ao longo do tempo) e não erro de digitação. Optou-se por não remover essas linhas, mas registrar a decisão. |
@@ -736,12 +748,12 @@ O top 5 representa ~43% do faturamento total — mix diversificado, sem dependê
 Neste projeto, aprendi a utilizar o Databricks e a aplicar a arquitetura medalhão.
 Consegui responder a maior parte das perguntas que faziam parte do objetivo deste trabalho, com a ressalva de que o período de tempo do dataset era curto, com o primeiro ano ainda mostrando um estágio de crescimento da plataforma.
 Um dos problemas que enfrentei foi uma certa indecisão quanto a estrutura dos dados e quanto a apresentação dos notebooks.
-Comecei o modelo star incluindo dim_customer e dim_sellers. No entanto, estas tabelas não eram realmente utilizadas - somente um campo de cada. Optei por remover, no entanto, talvez se no futuro buscasse mais granulosidade nas análises, seria interessante tê-las ali.
+Comecei o modelo star incluindo dim_customer. No entanto, esta tabela não era realmente utilizada - somente um campo dela era relevante. Optei por remover; talvez se no futuro buscasse mais granulosidade nas análises, seja interessante tê-la ali.
 Quanto a apresentação, primeiro optei por um notebook que incluísse tudo. Mas ficou extremamente longo e poluído. No meio do projeto, decidi construir um notebook para cada etapa do projeto.
 O que eu mais me marcou, no entanto, foi a experiência de utilizar IA como ferramenta de trabalho. Comecei pedindo à "Genie" que validasse como eu estava pensando em começar o projeto, mas recebi boa parte do código pronta. Minha primeira reação foi negativa, fiquei irritada porque o ponto do MVP era eu fazer o projeto. A Genie deletou tudo e passou a me acompanhar na construção. Com o tempo, percebi que tarefas repetitivas, particularmente a documentação de tabelas, podiam ser delegadas, sem que eu perdesse o controle. Me sentindo mais confortável com o Databricks e percebendo como o uso da IA economizava tempo, passei a usá-la com mais confiança, inclusive quando decidi reestruturar drasticamente os notebooks e remover tabelas. Não fosse a Genie, eu teria levado muito mais tempo para fazer estas mudanças.
 Em uma indústria que valoriza experiência com IA na automação de projetos e análises, visto em quase todas as vagas de emprego na área, este projeto foi extremamente importante para mim. No final, senti que eu era a pessoa pensando e salvando tempo porque tinha IA para fazer o pesado.
 Como trabalhos futuros, eu poderia:
-- Reintroduzir dim_customer e dim_sellers caso análises futuras precisem de mais granularidade geográfica ou de atributos de seller;
+- Reintroduzir dim_customer caso análises futuras precisem de mais granularidade geográfica ou de atributos de cliente;
 - Migrar a carga da camada Bronze de overwrite para um modelo incremental/MERGE, mais adequado a um cenário de produção com atualizações recorrentes;
 - Investigar um período de dados mais longo, para distinguir com mais confiança sazonalidade de queda real de tração da plataforma.
 
