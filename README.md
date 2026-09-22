@@ -63,9 +63,9 @@ Os arquivos utilizados neste projeto vêm do **Kaggle**, repositório que garant
 
 **📄 Licença:** ambos os datasets são disponibilizados sob **CC BY-NC-SA 4.0** (Atribuição, Uso Não-Comercial, Compartilhamento pela mesma licença), compatível com o uso acadêmico deste MVP.
 
-**⚠️ Considerações:** Originalmente há mais planilhas disponíveis no Kaggle; para simplificação, foram incluídas apenas as que atendem aos objetivos deste trabalho.
-
-Nem todas as colunas das tabelas abaixo são utilizadas no modelo final, já que não sã necessárias para responder as perguntas iniciais, que focam em vendas e indicadores de marketing. Elas foram descartadas na camada Silver e estão marcadas em *itálico* nas tabelas abaixo.
+**⚠️ Considerações:**
+- Originalmente há mais planilhas disponíveis no Kaggle; para simplificação, foram incluídas apenas as que atendem aos objetivos deste trabalho.
+- Nem todas as colunas das tabelas abaixo são utilizadas no modelo final, já que não sã necessárias para responder as perguntas iniciais, que focam em vendas e indicadores de marketing. Elas foram descartadas na camada Silver e estão marcadas em *itálico* nas tabelas abaixo.
 
 Clique nas tabelas abaixo para visualizar detalhes.
 
@@ -190,7 +190,8 @@ Clique nas tabelas abaixo para visualizar detalhes.
 Como a intenção é criar um ambiente OLAP, foi utilizada a modelagem estrela.
 Inicialmente o modelo incluía dim_customer, mas esta dimensão foi removida, pois somente uma coluna era relevante às perguntas de negócio definidas no objetivo. `purchase_state` (estado onde o pedido foi realizado) é o único atributo necessário e está mantido diretamente na fato_vendas. Essa decisão pode ser revista caso análises futuras exijam mais granularidade de cliente (ex.: número de compradores).
 
-<img width="412" height="263" alt="image" src="https://github.com/user-attachments/assets/20a07c96-567c-44e2-ada9-5afe8da333ec" />
+<img width="937" height="546" alt="image" src="https://github.com/user-attachments/assets/490bf15e-80d9-4fa0-98da-badfc40a31f3" />
+
 
 #### `fato_vendas`
 
@@ -280,7 +281,7 @@ Dimensão temporal para análises por período.
 
 ### 📥 Ingestão
 
-Para evitar a necessidade de configurar credenciais de API do Kaggle diretamente no ambiente Databricks, os arquivos foram baixados manualmente e salvos no GitHub. O notebook de ingestão copia os CSVs do Git folder para o volume do Unity Catalog (`mvp_pucrio.raw_files.csv_files`).
+Para evitar a necessidade de configurar credenciais de API do Kaggle diretamente no ambiente Databricks, os arquivos foram baixados manualmente e salvos no GitHub. O Databricks Repos mantém uma cópia sincronizada (via git pull) do repositório GitHub diretamente no Workspace; a partir dela, o notebook ingestion copia os arquivos para um Volume do Unity Catalog (`mvp_pucrio.raw_files.csv_files`).
 
 Script com explicações: [`ingestion.ipynb`](https://github.com/CY-PI/_DataEng_PUCRIO/blob/main/ingestion.ipynb)
 
@@ -303,7 +304,7 @@ O script para esta camada está em: [`bronze.ipynb`](https://github.com/CY-PI/_D
 
 **Catálogo de Dados — Camada Bronze:**
 
-Todas as tabelas e colunas foram documentadas no Unity Catalog via `COMMENT ON TABLE` e `COMMENT ON COLUMN`. Abaixo estão as descrições:
+Todas as tabelas e colunas foram documentadas no Unity Catalog via `COMMENT ON TABLE` e `COMMENT ON COLUMN`. Clique nas tabelas abaixo para visualizar os detalhes:
 
 <br>
 <details>
@@ -437,6 +438,8 @@ Visão final da camada bronze no Databricks:
 
 ### 🥈 Silver
 
+Script: [`silver.ipynb`](https://github.com/CY-PI/_DataEng_PUCRIO/blob/main/silver.ipynb)
+
 Antes de qualquer transformação, é feito um diagnóstico dos dados (nulos, duplicados, inconsistências) para saber o que precisa ser limpo.
 
 <br>
@@ -485,8 +488,6 @@ O agrupamento não alterou o valor total de vendas — nenhuma venda foi perdida
 
 <br>
 
-Script: [`silver.ipynb`](https://github.com/CY-PI/_DataEng_PUCRIO/blob/main/silver.ipynb)
-
 Visão final da camada silver no Databricks:
 
 <img width="468" height="388" alt="image" src="https://github.com/user-attachments/assets/eaebac2b-927b-4ccc-9abe-72f5e9d8c6b2" />
@@ -496,6 +497,8 @@ Visão final da camada silver no Databricks:
 ### 🥇 Gold
 
 Na camada gold, as tabelas são criadas e documentadas conforme o modelo estrela definido acima, com constraints de Primary Key/Foreign Key (apenas informativos — não verificados pelo Databricks).
+
+Script: [`gold.ipynb`](https://github.com/CY-PI/_DataEng_PUCRIO/blob/main/gold.ipynb) (inclui também a verificação de qualidade dos dados)
 
 <br>
 
@@ -563,7 +566,6 @@ Os `JOIN`s não duplicaram nem perderam registros na tabela fato.
 
 <br>
 
-Script com explicações: [`gold.ipynb`](https://github.com/CY-PI/_DataEng_PUCRIO/blob/main/gold.ipynb) (inclui também a verificação de qualidade dos dados)
 
 Visão final da camada gold no Databricks:
 
@@ -577,10 +579,12 @@ Visão final da camada gold no Databricks:
 
 ## ✅ Qualidade dos Dados
 
-Foram verificadas completude, consistência, unicidade e acurácia dos dados, além da identificação de outliers que pudessem distorcer análises estatísticas. Nenhum ajuste foi realizado — tudo documentado no notebook `gold` (link acima).
+Foram verificadas completude, consistência, unicidade e acurácia dos dados, além da identificação de outliers que pudessem distorcer análises estatísticas. Nenhum ajuste foi realizado — tudo documentado no **final do notebook `gold`**.
+
+Script: [`gold.ipynb`](https://github.com/CY-PI/_DataEng_PUCRIO/blob/main/gold.ipynb) (inclui também a verificação de qualidade dos dados)
 
 <details>
-<summary><strong>📋 Detalhes da verificação de qualidade</strong></summary>
+<summary><strong>📋 Detalhes da verificação de qualidade (clique aqui) </strong></summary>
 
 | Dimensão | Resultado |
 |---|---|
@@ -633,9 +637,10 @@ Abaixo estão as respostas às perguntas iniciais do projeto, com insights e rec
 <br>
 
 <details>
-<summary><strong>📊 Vendas mensais — receita total por mês</strong></summary>
+<summary><strong>📊 Vendas mensais — receita total por mês (clique aqui para visualizar detalhes) </strong></summary>
 
-<img width="573" height="244" alt="image" src="https://github.com/user-attachments/assets/e266d724-9e93-4d3d-a06c-78377fcf0667" />
+<img width="828" height="349" alt="image" src="https://github.com/user-attachments/assets/e35e01d6-e2f3-4784-8d17-5501b7887678" />
+
 
 </details>
 
@@ -658,7 +663,7 @@ Abaixo estão as respostas às perguntas iniciais do projeto, com insights e rec
 
 <br>
 <details>
-<summary><strong>📊 Sumário: Top 19% vs Restante 81%</strong></summary>
+<summary><strong>📊 Sumário: Top 19% vs Restante 81% (clique aqui para detalhes)</strong></summary>
 
 | Grupo | # Sellers | % Sellers | Pedidos | Vendas | % Vendas | Comissão | Ticket médio |
 |---|---|---|---|---|---|---|---|
@@ -668,10 +673,11 @@ Abaixo estão as respostas às perguntas iniciais do projeto, com insights e rec
 </details>
 <br>
 <details>
-<summary><strong>📊 Top sellers</strong></summary>
+<summary><strong>📊 Top sellers (clique aqui para detalhes)</strong></summary>
 
 
-<img width="988" height="428" alt="image" src="https://github.com/user-attachments/assets/42c84960-3180-46c2-8d3c-a5cc53d755e2" />
+<img width="989" height="419" alt="image" src="https://github.com/user-attachments/assets/c6c5bc57-79bd-44ad-ae0c-2d0302f90ca2" />
+
 
 </details>
 
@@ -687,9 +693,10 @@ Abaixo estão as respostas às perguntas iniciais do projeto, com insights e rec
 <br> 
 
 <details>
-<summary><strong>📊 Categorias por receita</strong></summary>
+<summary><strong>📊 Categorias por receita (clique aqui para detalhes)</strong></summary>
 
-<img width="746" height="389" alt="image" src="https://github.com/user-attachments/assets/0f1e7af7-1941-44f0-a1ba-a94caca37515" />
+<img width="741" height="346" alt="image" src="https://github.com/user-attachments/assets/8959254a-6b5b-4eaa-85fb-1d623bc4168f" />
+
 
 </details>
 
@@ -706,10 +713,9 @@ O top 5 representa ~43% do faturamento total — mix diversificado, sem dependê
 **Paid_search (12,3%) e organic_search (11,8%)** lideram em conversão e volume de leads. Social tem conversão baixa (5,6%) mas traz 75 conversões pelo alto volume. Display tem ciclo curto (10 dias vs 50-60 dos líderes) mas apenas 6 conversões totais.
 
 <details>
-<summary><strong>📊 Output completo por canal</strong></summary>
+<summary><strong>📊 Output completo por canal (clique aqui para detalhes)</strong></summary>
 
-<img width="987" height="255" alt="image" src="https://github.com/user-attachments/assets/b78591be-5cd3-41c1-8cd0-0595d158d5ef" />
-
+<img width="977" height="179" alt="image" src="https://github.com/user-attachments/assets/f9afdda0-43ff-4691-8b61-2689321f35c1" />
 
 
 > Canais `unknown`, `other` e `other_publicities` foram excluídos da análise por não serem rastreáveis.
@@ -731,17 +737,11 @@ O top 5 representa ~43% do faturamento total — mix diversificado, sem dependê
 **Sim, forte relação.** Sellers ativos (81,6%) têm LTV 6,3x maior que churned: R$ 462 vs R$ 73. Sellers ativos fazem 34 pedidos em média vs apenas 4 dos churned. O churn está associado a baixo engajamento nas primeiras vendas.
 
 <details>
-<summary><strong>📊 Output completo: Sellers ativos vs churned</strong></summary>
+<summary><strong>📊 Output completo: Sellers ativos vs churned (clique aqui para detalhes)</strong></summary>
 
 > Critério de churn: sem vendas há mais de 180 dias (referência: 31/08/2018).
 
-<img width="886" height="116" alt="image" src="https://github.com/user-attachments/assets/92c66b25-ec5b-471e-b0ae-c69395ebe469" />
-
-
-| Status | # Sellers | % Sellers | LTV médio (R$) | Pedidos/seller | Dias desde última venda |
-|---|---|---|---|---|---|
-| Active | 2.166 | 81,64% | 462,22 | 34,31 | 43,8 |
-| Churned | 487 | 18,36% | 73,38 | 4,40 | 264,7 |
+<img width="889" height="74" alt="image" src="https://github.com/user-attachments/assets/62c9f7b0-01be-4e2c-b527-714e80376a26" />
 
 </details>
 
@@ -763,7 +763,7 @@ Quanto a apresentação, primeiro optei por um notebook que incluísse tudo. Mas
 O que eu mais me marcou, no entanto, foi a experiência de utilizar IA como ferramenta de trabalho. Comecei pedindo à "Genie" que validasse como eu estava pensando em começar o projeto, mas recebi boa parte do código pronta. Minha primeira reação foi negativa, fiquei irritada porque o ponto do MVP era eu fazer o projeto. A Genie deletou tudo e passou a me acompanhar na construção. Com o tempo, percebi que tarefas repetitivas, particularmente a documentação de tabelas, podiam ser delegadas, sem que eu perdesse o controle. Me sentindo mais confortável com o Databricks e percebendo como o uso da IA economizava tempo, passei a usá-la com mais confiança, inclusive quando decidi reestruturar drasticamente os notebooks e remover tabelas. Não fosse a Genie, eu teria levado muito mais tempo para fazer estas mudanças.
 Em uma indústria que valoriza experiência com IA na automação de projetos e análises, visto em quase todas as vagas de emprego na área, este projeto foi extremamente importante para mim. No final, senti que eu era a pessoa pensando e salvando tempo porque tinha IA para fazer o pesado.
 Como trabalhos futuros, eu poderia:
-- Reintroduzir dim_customer caso análises futuras precisem de mais granularidade geográfica ou de atributos de cliente;
+- Reintroduzir dim_customer caso análises futuras precisem de mais granularidade;
 - Migrar a carga da camada Bronze de overwrite para um modelo incremental/MERGE, mais adequado a um cenário de produção com atualizações recorrentes;
 - Investigar um período de dados mais longo, para distinguir com mais confiança sazonalidade de queda real de tração da plataforma.
 
