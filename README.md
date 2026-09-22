@@ -637,7 +637,7 @@ Abaixo estão as respostas às perguntas iniciais do projeto, com insights e rec
 <br>
 
 <details>
-<summary><strong>📊 Vendas mensais — receita total por mês (clique aqui para visualizar detalhes) </strong></summary>
+<summary><strong>📊 Vendas mensais — receita total por mês (clique aqui para output) </strong></summary>
 
 <img width="828" height="349" alt="image" src="https://github.com/user-attachments/assets/e35e01d6-e2f3-4784-8d17-5501b7887678" />
 
@@ -663,7 +663,7 @@ Abaixo estão as respostas às perguntas iniciais do projeto, com insights e rec
 
 <br>
 <details>
-<summary><strong>📊 Sumário: Top 19% vs Restante 81% (clique aqui para detalhes)</strong></summary>
+<summary><strong>📊 Sumário: Top 19% vs Restante 81% (clique aqui para output)</strong></summary>
 
 | Grupo | # Sellers | % Sellers | Pedidos | Vendas | % Vendas | Comissão | Ticket médio |
 |---|---|---|---|---|---|---|---|
@@ -693,7 +693,7 @@ Abaixo estão as respostas às perguntas iniciais do projeto, com insights e rec
 <br> 
 
 <details>
-<summary><strong>📊 Categorias por receita (clique aqui para detalhes)</strong></summary>
+<summary><strong>📊 Categorias por receita (clique aqui para output)</strong></summary>
 
 <img width="741" height="346" alt="image" src="https://github.com/user-attachments/assets/8959254a-6b5b-4eaa-85fb-1d623bc4168f" />
 
@@ -713,7 +713,7 @@ O top 5 representa ~43% do faturamento total — mix diversificado, sem dependê
 **Paid_search (12,3%) e organic_search (11,8%)** lideram em conversão e volume de leads. Social tem conversão baixa (5,6%) mas traz 75 conversões pelo alto volume. Display tem ciclo curto (10 dias vs 50-60 dos líderes) mas apenas 6 conversões totais.
 
 <details>
-<summary><strong>📊 Output completo por canal (clique aqui para detalhes)</strong></summary>
+<summary><strong>📊 Output completo por canal (clique aqui para output)</strong></summary>
 
 <img width="977" height="179" alt="image" src="https://github.com/user-attachments/assets/f9afdda0-43ff-4691-8b61-2689321f35c1" />
 
@@ -737,7 +737,7 @@ O top 5 representa ~43% do faturamento total — mix diversificado, sem dependê
 **Sim, forte relação.** Sellers ativos (81,6%) têm LTV 6,3x maior que churned: R$ 462 vs R$ 73. Sellers ativos fazem 34 pedidos em média vs apenas 4 dos churned. O churn está associado a baixo engajamento nas primeiras vendas.
 
 <details>
-<summary><strong>📊 Output completo: Sellers ativos vs churned (clique aqui para detalhes)</strong></summary>
+<summary><strong>📊 Output completo: Sellers ativos vs churned (clique aqui para output)</strong></summary>
 
 > Critério de churn: sem vendas há mais de 180 dias (referência: 31/08/2018).
 
