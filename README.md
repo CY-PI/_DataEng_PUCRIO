@@ -65,7 +65,7 @@ Os arquivos utilizados neste projeto vêm do **Kaggle**, repositório que garant
 
 **⚠️ Considerações:**
 - Originalmente há mais planilhas disponíveis no Kaggle; para simplificação, foram incluídas apenas as que atendem aos objetivos deste trabalho.
-- Nem todas as colunas das tabelas abaixo são utilizadas no modelo final, já que não sã necessárias para responder as perguntas iniciais, que focam em vendas e indicadores de marketing. Elas foram descartadas na camada Silver e estão marcadas em *itálico* nas tabelas abaixo.
+- Nem todas as colunas das tabelas abaixo são utilizadas no modelo final, já que não são necessárias para responder as perguntas iniciais, que focam em vendas e indicadores de marketing. Elas foram descartadas na camada Silver e estão marcadas em *itálico* nas tabelas abaixo.
 
 Clique nas tabelas abaixo para visualizar detalhes.
 
@@ -570,7 +570,8 @@ Os `JOIN`s não duplicaram nem perderam registros na tabela fato.
 
 Visão final da camada gold no Databricks:
 
-<img width="468" height="323" alt="image" src="https://github.com/user-attachments/assets/671d5c1a-c6e3-424c-bc95-c2613cbf5f6c" />
+<img width="662" height="489" alt="image" src="https://github.com/user-attachments/assets/8ed287d8-8117-4c77-bcc2-ebe08a2d1a90" />
+
 
 > 📌 As funções utilitárias compartilhadas entre silver e gold estão no notebook [`common.ipynb`](https://github.com/CY-PI/_DataEng_PUCRIO/blob/main/common.ipynb), que é executado dentro de cada notebook.
 
