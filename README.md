@@ -199,11 +199,11 @@ Tabela fato de vendas com as métricas e dimensões necessárias para as anális
 
 | Coluna | Tipo | Descrição | Origem | Domínio |
 |---|---|---|---|---|
-| `order_id` | `STRING` | PK — ID único da ordem | `bronze.orders` | Identificador único alfanumérico |
+| `order_id` | `STRING` | Parte da PK composta (`order_id + product_id + seller_id`) — ID da ordem | `bronze.orders` | Identificador único alfanumérico |
 | `mql_id` | `STRING` | FK do lead de marketing que originou essa venda, quando aplicável | `silver.closed_deals` via `LEFT JOIN` | Nullable; nem toda venda tem lead associado |
-| `seller_id` | `STRING` | FK → `dim_sellers.seller_id` — Vendedor na plataforma. Representa o real cliente da plataforma | `bronze.sellers` via `dim_sellers` | Valor alfanumérico |
+| `seller_id` | `STRING` | FK → `dim_sellers.seller_id` + parte da PK composta — Vendedor na plataforma. Representa o real cliente da plataforma | `bronze.sellers` via `dim_sellers` | Valor alfanumérico |
 | `purchase_state` | `STRING` | Estado (UF) onde o pedido foi realizado | `silver.customers` — `customer_state` | Sigla de estado brasileiro com 2 letras |
-| `product_id` | `STRING` | FK do produto vendido | `bronze.order_items` | Valor alfanumérico |
+| `product_id` | `STRING` | FK → `dim_products.product_id` + parte da PK composta — Produto vendido | `bronze.order_items` | Valor alfanumérico |
 | `order_date` | `DATE` | FK da data da compra | `bronze.orders` — `order_purchase_timestamp` | Formato `YYYY-MM-DD`; intervalo de `2016-09-04` a `2018-10-17` |
 | `order_status` | `STRING` | Status atual da ordem no ciclo de vida do pedido | `bronze.orders` | `approved`, `created`, `delivered`, `invoiced`, `processing`, `shipped` |
 | `quantity` | `INT` | Quantidade de itens vendidos na ordem | `bronze.order_items` — `COUNT` agregado | Maior que `0`; número inteiro |
@@ -271,7 +271,7 @@ Dimensão temporal para análises por período.
 | `year` | `INT` | Ano (YYYY) | Extraído de `order_date` | Intervalo: `2016–2018` |
 | `month` | `INT` | Mês (1–12) | Extraído de `order_date` | `1–12` |
 | `quarter` | `INT` | Trimestre (Q1–Q4) | Calculado a partir de `month` | `1–4` |
-| `day_of_week` | `STRING` | Dia da semana | Extraído de `order_date` | `1–7` (`1 = Domingo`, `7 = Sábado`) |
+| `day_of_week` | `INT` | Dia da semana | Extraído de `order_date` | `1–7` (`1 = Domingo`, `7 = Sábado`) |
 
 <br>
 
@@ -589,7 +589,7 @@ Script: [`gold.ipynb`](https://github.com/CY-PI/_DataEng_PUCRIO/blob/main/gold.i
 | Dimensão | Resultado |
 |---|---|
 | **Completude** | ✅ Nenhuma tabela apresentou valores nulos nas colunas do modelo. A limpeza feita na camada Silver (valores ausentes preenchidos com `"unknown"`) garantiu completude até a camada final. |
-| **Consistência** | ✅ Validada em dois níveis: (1) integridade referencial garantida pelas constraints de FK (`fk_fato_leads`, `fk_fato_produtos`, `fk_fato_dates`, `fk_fato_sellers`) e PK composta em `fato_vendas`; (2) checksum entre `silver.order_items` e `fato_vendas` confirmou que os joins não alteraram o valor de vendas (apenas pedidos válidos — `canceled` e `unavailable` excluídos da fato_vendas). A consistência de valores categóricos (estados, status de pedido) já foi verificada na camada Silver e chega à Gold por herança. |
+| **Consistência** | ✅ Validada em dois níveis: (1) integridade referencial verificada via `LEFT ANTI JOIN` entre `fato_vendas` e cada dimensão: `product_id` → `dim_products`, `seller_id` → `dim_sellers`, `order_date` → `dim_dates` — todas retornaram zero órfãos, confirmando que toda chave estrangeira na fato tem correspondência na dimensão. A FK `mql_id` → `dim_leads` não foi verificada porque o valor `"unknown"` é intencional: sellers que não vieram de leads rastreados recebem esse valor via `COALESCE` na criação da `fato_vendas`, e não representam uma violação de integridade, mas sim uma decisão de design documentada; (2) checksum entre `silver.order_items` e `fato_vendas` confirmou que os joins não alteraram o valor de vendas (apenas pedidos válidos — `canceled` e `unavailable` excluídos da `fato_vendas`). A consistência de valores categóricos (estados, status de pedido) já foi verificada na camada Silver e chega à Gold por herança. |
 | **Unicidade** | ✅ Não há linhas duplicadas nem violação da chave composta primária (`order_id + product_id + seller_id`) na tabela `fato_vendas`. |
 | **Acurácia temporal** | ⚠️ `dim_leads` apresentou 17 registros de leads convertidos com `won_date` posterior à última data de venda registrada no dataset, e 1 registro com `won_date` anterior ao `first_contact_date` (inconsistência lógica — um negócio não pode ser fechado antes do primeiro contato). Optou-se por manter esses registros e documentar a limitação, já que representam menos de 0,1% da base de leads e não afetam as métricas de vendas (`fato_vendas`) — apenas análises específicas de ciclo de vendas que usem esses casos pontuais. |
 | **Outliers** | ⚠️ 4.195 linhas (~4% de `fato_vendas`) têm preço unitário fora do intervalo IQR esperado para o respectivo produto. Ao inspecionar os casos de maior valor, eles correspondem a categorias coerentes com preços altos (eletrônicos, relógios, informática, ferramentas de construção), com `quantity=1` — sugerindo variação legítima de preço (versões/modelos diferentes do mesmo `product_id`, ou mudança de preço ao longo do tempo) e não erro de digitação. Optou-se por não remover essas linhas, mas registrar a decisão. |
@@ -610,6 +610,12 @@ def detect_outliers(df, table_name):
     """Detecta outliers em preços unitários usando método IQR (Interquartile Range)."""
     # Calcula Q1, Q3 por produto e filtra linhas fora de [Q1 - 1.5*IQR, Q3 + 1.5*IQR]
     ...
+
+def check_referential_integrity(df, table_name):
+    """Verifica integridade referencial: toda FK da fato_vendas deve existir na dimensão correspondente."""
+    # LEFT ANTI JOIN para cada FK: product_id → dim_products, seller_id → dim_sellers, order_date → dim_dates
+    # mql_id não é verificado — o valor "unknown" é intencional (sellers sem lead rastreado)
+    ...
 ```
 
 <br>
@@ -618,6 +624,7 @@ def detect_outliers(df, table_name):
 
 - Acurácia temporal: 17 linhas com `won_date` no futuro + 1 com `won_date < first_contact_date`
 - Outliers: 4.195 linhas detectadas (categorias de alto preço: eletrônicos, relógios, informática)
+- Integridade referencial: ✅ zero órfãos para `product_id` → `dim_products`, `seller_id` → `dim_sellers`, `order_date` → `dim_dates` (`mql_id` não verificado — "unknown" é intencional)
 - Resultado final: 🎉 Nenhuma tabela com problemas críticos — os encontrados foram documentados e mantidos
 
 </details>
