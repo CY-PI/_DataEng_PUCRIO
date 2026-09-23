@@ -190,7 +190,8 @@ Clique nas tabelas abaixo para visualizar detalhes.
 Como a intenção é criar um ambiente OLAP, foi utilizada a modelagem estrela.
 Inicialmente o modelo incluía dim_customer, mas esta dimensão foi removida, pois somente uma coluna era relevante às perguntas de negócio definidas no objetivo. `purchase_state` (estado onde o pedido foi realizado) é o único atributo necessário e está mantido diretamente na fato_vendas. Essa decisão pode ser revista caso análises futuras exijam mais granularidade de cliente (ex.: número de compradores).
 
-<img width="937" height="546" alt="image" src="https://github.com/user-attachments/assets/490bf15e-80d9-4fa0-98da-badfc40a31f3" />
+<img width="744" height="431" alt="image" src="https://github.com/user-attachments/assets/936be817-9e8f-4801-820b-2a3a3f749c99" />
+
 
 
 #### `fato_vendas`
