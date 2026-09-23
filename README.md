@@ -772,8 +772,8 @@ O que eu mais me marcou, no entanto, foi a experiência de utilizar IA como ferr
 Em uma indústria que valoriza experiência com IA na automação de projetos e análises, visto em quase todas as vagas de emprego na área, este projeto foi extremamente importante para mim. No final, senti que eu era a pessoa pensando e salvando tempo porque tinha IA para fazer o pesado.
 Como trabalhos futuros, eu poderia:
 - Reintroduzir dim_customer caso análises futuras precisem de mais granularidade;
-- Migrar a carga da camada Bronze de overwrite para um modelo incremental/MERGE, mais adequado a um cenário de produção com atualizações recorrentes;
-- Investigar um período de dados mais longo, para distinguir com mais confiança sazonalidade de queda real de tração da plataforma.
+- Migrar a carga da camada Bronze de overwrite para um modelo incremental/MERGE, que seria mais adequado a um cenário de produção com atualizações recorrentes;
+- Investigar um período de dados mais longo, para identificar com mais confiança qualquer sazonalidade.
 
 <br>
 
