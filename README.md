@@ -31,7 +31,7 @@ Utilizando o dataset mencionado, o projeto busca responder às seguintes pergunt
 
 1. Quais são os meses de maior pico?
 2. De onde vem a receita — a regra de Pareto se aplica aos vendedores da plataforma?
-3. Quais segmentos de produto trazem mais receita?
+3. Quais categorias de produto trazem mais receita?
 4. Algum canal de marketing é melhor (em termos de conversão e ciclo médio de vendas)?
 5. Existe relação entre baixo faturamento e maior risco de abandonar a plataforma? (LTV, churn)
 
@@ -698,7 +698,7 @@ Abaixo estão as respostas às perguntas iniciais do projeto, com insights e rec
 
 <br>
 
-### 3️⃣ Quais segmentos de produto trazem mais receita?
+### 3️⃣ Quais categorias de produto trazem mais receita?
 
 **beleza_saude lidera com R$ 1,01M** (7.027 pedidos), seguida por relogios_presentes (R$ 989K, 4.798 pedidos). Cama_mesa_banho, esporte_lazer e informatica_acessorios completam o top 5 (total = R$ 4,2M).
 <br> 
@@ -706,7 +706,7 @@ Abaixo estão as respostas às perguntas iniciais do projeto, com insights e rec
 <details>
 <summary><strong>📊 Categorias por receita (clique aqui para output)</strong></summary>
 
-<img width="741" height="346" alt="image" src="https://github.com/user-attachments/assets/8959254a-6b5b-4eaa-85fb-1d623bc4168f" />
+<img width="673" height="348" alt="image" src="https://github.com/user-attachments/assets/88ec4dc3-0008-4f0e-94ac-4b1f296b79b1" />
 
 
 </details>
