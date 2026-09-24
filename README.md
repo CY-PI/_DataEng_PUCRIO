@@ -456,7 +456,7 @@ Antes de qualquer transformação, é feito um diagnóstico dos dados (nulos, du
 - **Duplicados:** nenhuma tabela apresentou duplicidade nas chaves primárias.
 - **Integridade referencial:** Todos os relacionamentos FK estavam íntegros, exceto seller_id da tabela `closed_deals`: 462 sellers dessa tabela não existem na tabela `sellers`. Esses sellers fecharam deals de marketing mas provavelmente nunca chegaram a vender de fato. Não foram adicionados à tabela `sellers` por falta de informações adicionais (cidade, estado) e ausência de registros de vendas associados.
 - **Consistência de valores categóricos:** também foram validados os estados (UFs brasileiras) em `customers` e `sellers`, e os status de pedido em `orders` (`delivered`, `shipped`, `canceled`, `processing`, `unavailable`, `invoiced`, `created`, `approved`). Nenhum valor inválido foi encontrado. Cidades (`seller_city`, `customer_city`) não foram validadas quanto a formato/padronização, pois não são utilizadas na análise final. No entanto, em um cenário de produção, seria recomendável validar nomes de cidade contra uma **tabela de referência** (ex: municípios do IBGE) para garantir que variações ortográficas (ex: "sao paulo" vs "são paulo") sejam normalizadas.
-- **Agregação necessária em `order_items`:** 112.650 linhas na origem, mas apenas 102.425 combinações únicas de `order_id + product_id + seller_id`. As 10.225 linhas restantes representam múltiplos itens do mesmo produto/seller dentro do mesmo pedido, que foram agregados (somando `price` em `sales_value` e contando em `quantity`).
+- **Agregação necessária em `order_items`:** Registros agrupados por `order_id + product_id + seller_id`. Estes items foram agregados somando `price` (como `sales_value`) e contando o número de linhas (para formar a coluna `quantity`).
 
 <br>
 
@@ -466,6 +466,7 @@ Antes de qualquer transformação, é feito um diagnóstico dos dados (nulos, du
 2. Agrupamento de `order_items` por `order_id + product_id + seller_id`, somando `price` em `sales_value` e contando linhas em `quantity` (112.650 → 102.425 linhas)
 3. Substituição de valores ausentes por `"unknown"` (610 em `product_category_name`, 60 em `origin`)
 4. Definição de tipos explícitos (ex.: `order_purchase_timestamp` → `DATE` como `order_date`)
+5. Padronização de nomes de categoria de produtos em `products`: `eletrodomesticos_2` → `eletrodomesticos`, `casa_conforto_2` → `casa_conforto`, `construcao_ferramentas_jardim` → `ferramentas_jardim`, `alimentos` e `bebidas` → `alimentos_bebidas` (73 → 69 categorias)
 
 <br>
 
@@ -699,7 +700,7 @@ Abaixo estão as respostas às perguntas iniciais do projeto, com insights e rec
 
 ### 3️⃣ Quais segmentos de produto trazem mais receita?
 
-**beleza_saude lidera com R$ 1,01M** (7.056 pedidos).
+**beleza_saude lidera com R$ 1,01M** (7.027 pedidos), seguida por relogios_presentes (R$ 989K, 4.798 pedidos). Cama_mesa_banho, esporte_lazer e informatica_acessorios completam o top 5 (total = R$ 4,2M).
 <br> 
 
 <details>
@@ -710,11 +711,11 @@ Abaixo estão as respostas às perguntas iniciais do projeto, com insights e rec
 
 </details>
 
-O top 5 representa ~43% do faturamento total — mix diversificado, sem dependência crítica de uma categoria. Utilidade doméstica, bem-estar e lazer dominam o catálogo mais vendido.
+Estes 5 itens representam ~43% do total vendido, o que indica um mix diversificado, sem dependência crítica de uma categoria.
 
 <br>
 
-💡 **Recomendação:** Investir em categorias de alto ticket mas baixo volume (ex: PCs, R$ 1.223 de ticket médio) para aumentar receita sem prejudicar margem.
+💡 **Recomendação:** Investir em categorias de alto ticket mas baixo volume (ex: PCs, R$ 1.223 de ticket médio, mas apenas 150 pedidos no período) para aumentar receita sem prejudicar margem.
 
 <br>
 
