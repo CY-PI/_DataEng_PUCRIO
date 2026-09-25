@@ -1,6 +1,6 @@
 # 📊 MVP de Engenharia de Dados — Análise Olist E-commerce
 
-Nome: Cyntia P. Invernizzi
+Nome: Cyntia P. Invernizzi  
 Matrícula: 4052026001020
 
 <br>
