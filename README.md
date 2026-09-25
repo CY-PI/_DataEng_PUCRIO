@@ -3,8 +3,6 @@
 Nome: Cyntia P. Invernizzi  
 Matrícula: 4052026001020
 
-<br>
-
 ---
 
 > Pipeline de dados end-to-end (arquitetura medalhão) construído sobre o dataset público da **Olist**, um marketplace brasileiro, para responder perguntas de negócio sobre vendas, sellers, marketing e churn.
