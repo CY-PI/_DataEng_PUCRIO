@@ -1,5 +1,12 @@
 # 📊 MVP de Engenharia de Dados — Análise Olist E-commerce
 
+Nome: Cyntia P. Invernizzi
+Matrícula: 4052026001020
+
+<br>
+
+---
+
 > Pipeline de dados end-to-end (arquitetura medalhão) construído sobre o dataset público da **Olist**, um marketplace brasileiro, para responder perguntas de negócio sobre vendas, sellers, marketing e churn.
 
 ## 📑 Índice
@@ -769,7 +776,7 @@ Estes 5 itens representam ~43% do total vendido, o que indica um mix diversifica
 Neste projeto, aprendi a utilizar o Databricks e a aplicar a arquitetura medalhão.
 Consegui responder a maior parte das perguntas que faziam parte do objetivo deste trabalho, com a ressalva de que o período de tempo do dataset era curto, com o primeiro ano ainda mostrando um estágio de crescimento da plataforma.
 Um dos problemas que enfrentei foi uma certa indecisão quanto a estrutura dos dados e quanto a apresentação dos notebooks.
-Comecei o modelo star incluindo dim_customer. No entanto, esta tabela não era realmente utilizada - somente um campo dela era relevante. Optei por remover; talvez se no futuro buscasse mais granulosidade nas análises, seja interessante tê-la ali.
+Comecei o modelo star incluindo dim_customer. No entanto, esta tabela não era realmente utilizada - somente um campo dela era relevante. Optei por remover; talvez se no futuro buscasse mais granularidade nas análises, seja interessante tê-la ali.
 Quanto a apresentação, primeiro optei por um notebook que incluísse tudo. Mas ficou extremamente longo e poluído. No meio do projeto, decidi construir um notebook para cada etapa do projeto.
 O que eu mais me marcou, no entanto, foi a experiência de utilizar IA como ferramenta de trabalho. Comecei pedindo à "Genie" que validasse como eu estava pensando em começar o projeto, mas recebi boa parte do código pronta. Minha primeira reação foi negativa, fiquei irritada porque o ponto do MVP era eu fazer o projeto. A Genie deletou tudo e passou a me acompanhar na construção. Com o tempo, percebi que tarefas repetitivas, particularmente a documentação de tabelas, podiam ser delegadas, sem que eu perdesse o controle. Me sentindo mais confortável com o Databricks e percebendo como o uso da IA economizava tempo, passei a usá-la com mais confiança, inclusive quando decidi reestruturar drasticamente os notebooks e remover tabelas. Não fosse a Genie, eu teria levado muito mais tempo para fazer estas mudanças.
 Em uma indústria que valoriza experiência com IA na automação de projetos e análises, visto em quase todas as vagas de emprego na área, este projeto foi extremamente importante para mim. No final, senti que eu era a pessoa pensando e salvando tempo porque tinha IA para fazer o pesado.
